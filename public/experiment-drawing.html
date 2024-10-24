@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Experiment in progress!</title>
+    <link rel="icon" type="image/png" href="./images/favicon.png"/>
+    <link rel="stylesheet" href="./css/experiment_ui.css">
+    <script type = "text/javascript" src="./scripts/utils.js"></script>
+    <script type = "text/javascript" src="scripts/raphael-min.js"></script>
+    <script type="text/javascript" src="//ajax.googleapis.com/ajax/libs/jquery/2.0.0/jquery.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/js-cookie@3.0.5/dist/js.cookie.min.js"></script>
+    <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+</head>
+<body>
+
+    <div class="container">
+        <div class="question">Which?</div>
+        <div class="options-container">
+            <div id="choice_left" class="option">
+                <div id="choice1">
+                
+                </div>
+                <button onclick="sendDrawing(0)">Select Option 1</button>
+            </div>
+            <div id="choice_right" class="option">
+                <div id="choice2">
+                
+                </div>
+                <button onclick="sendDrawing(1)">Select Option 2</button>
+            </div>
+        </div>
+    </div>
+    <div id="progressBar"></div>
+
+    <script>
+        var paper_left = new Raphael("choice1", 100, 100);
+        // paper_left.canvas.style.backgroundColor = '#ABBAEA';
+        var paper_right = new Raphael("choice2", 100, 100);
+        // paper_right.canvas.style.backgroundColor = '#FBD603';
+        startDrawing();
+    </script>
+</body>
+</html>

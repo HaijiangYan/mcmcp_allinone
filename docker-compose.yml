@@ -1,0 +1,68 @@
+name: mcmcp-allinone
+services:
+  # These are the configurations for our Node app
+  # When Docker Compose starts this container it will automatically
+  # use the Dockerfile in the directory to configure it
+  app:
+    build: .
+    image: haijiangyan/mcmcp-allinone:latest
+    environment:
+      # database 
+      - DB_USER=root
+      - DB_PASSWORD=mcmcp
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_NAME=mcmcp
+      - PORT=8080
+    depends_on:
+      # Our app does not work without our database
+      # so this ensures our database is loaded first
+      postgres: 
+        condition: service_healthy
+        restart: true
+    ports:
+      - "8080:8080"
+    volumes:
+      # Maps our current project directory `.` to
+      # our working directory in the container
+      - ./:/usr/src/app/
+
+  # This is the configuration for our PostgreSQL database container
+  # Note the `postgres` name is important, in out Node app when we refer
+  # to  `host: "postgres"` that value is mapped on the network to the 
+  # address of this container.
+  postgres:
+    image: postgres:14-alpine3.20
+    restart: always
+    environment:
+      # You can set the value of environment variables
+      # in your docker-compose.yml file
+      # Our Node app will use these to connect
+      # to the database
+      - POSTGRES_USER=root
+      - POSTGRES_PASSWORD=mcmcp
+      - POSTGRES_DB=mcmcp
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready"]
+      interval: 10s
+      retries: 5
+      start_period: 30s
+      timeout: 10s
+    ports:
+      # Standard port for PostgreSQL databases
+      - "5432:5432"
+    volumes:
+      # When the PostgreSQL container is started it will run any scripts
+      # provided in the `docker-entrypoint-initdb.d` directory, this connects
+      # our seed file to that directory so that it gets run
+      - ./config/database-seed.sql:/docker-entrypoint-initdb.d/database-seed.sql
+
+  pgadmin-compose:
+        image: dpage/pgadmin4
+        environment:
+            PGADMIN_DEFAULT_EMAIL: "test@abc.com"
+            PGADMIN_DEFAULT_PASSWORD: "test"
+        ports:
+            - "16543:80"
+        depends_on:
+            - postgres
