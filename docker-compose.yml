@@ -8,7 +8,7 @@ services:
     image: haijiangyan/mcmcp-allinone:latest
     environment:
       # database 
-      - DB_USER=root
+      - DB_USER=postgres
       - DB_PASSWORD=mcmcp
       - DB_HOST=postgres
       - DB_PORT=5432
@@ -34,12 +34,14 @@ services:
   postgres:
     image: postgres:14-alpine3.20
     restart: always
+    user: postgres
+    container_name: postgres14
     environment:
       # You can set the value of environment variables
       # in your docker-compose.yml file
       # Our Node app will use these to connect
       # to the database
-      - POSTGRES_USER=root
+      - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=mcmcp
       - POSTGRES_DB=mcmcp
     healthcheck:
