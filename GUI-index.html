@@ -1,0 +1,187 @@
+<!-- GUI -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.2.4/jquery.min.js"></script>
+  <title>Experiment Setup</title>
+</head>
+<body>
+  <h2>Set Environment Variables</h2>
+
+  <fieldset style="height:250px">
+    <legend>Experiment type:</legend>
+  
+    <div>
+      <input type="checkbox" id="MCMCP" class="experiment-type" value="MCMCP" />
+      <label for="MCMCP">MCMCP</label>
+    </div>
+
+    <div>
+      <input type="checkbox" id="individual-MCMCP" class="experiment-type" value="individual-MCMCP" />
+      <label for="individual-MCMCP">individual-MCMCP</label>
+    </div>
+  
+    <div>
+      <input type="checkbox" id="blockwise-MCMCP" class="experiment-type" value="blockwise-MCMCP" />
+      <label for="blockwise-MCMCP">blockwise-MCMCP</label>
+    </div>
+
+    <div>
+      <input type="checkbox" id="discrete-MCMCP" class="experiment-type" value="dMCMCP" />
+      <label for="discrete-MCMCP">discrete-MCMCP</label>
+    </div><br><br>
+
+    <div>
+    <label class="group-level">For group-level MCMCP, please name the table where choices will be saved:</label>
+    <input class="group-level" id="group-table" type="text" value="group"><br><br>
+  
+    <label class="blockwise">For blockwise MCMCP, please set the number of blocks (each block targets at a single category):</label>
+    <input class="blockwise" id="blockwise-blocks" type="text" value="3"><br><br>
+  
+    <label class="blockwise">Please set the number of trials in each block when selecting labels:</label>
+    <input class="blockwise" id="blockwise-ntrials-label" type="text" value="20"><br><br>
+    </div>
+  </fieldset>
+
+  <label>Please set the number of trials in each block when selecting stimuli:</label>
+  <input id="n_trial" type="text" value="20"><br><br>
+
+  <label>Enter names of the categories involved in the experiment:</label>
+  <input id="categories" type="text" value="happy, sad"><br><br>
+
+  <label>Specify questions for these categories when selecting stimuli:</label><br>
+  <input id="questions" type="text" value="Which one looks happier?/Which one looks sadder?" size="100"><br><br>
+
+  <label>Enter number of dimensions of the stimuli space:</label>
+  <input id="dim" type="text" value="3"><br><br>
+
+  <label>Enter number of chains:</label>
+  <input id="n_chain" type="text" value="2"><br><br>
+
+
+  <fieldset id="stimuli">
+    <legend>Stimuli type:</legend>
+  
+    <div>
+      <input type="checkbox" id="test" name="test" value="test" class="stimuli"/>
+      <label for="test">test</label>
+    </div>
+
+    <div>
+      <input type="checkbox" id="image" name="image" value="image" class="stimuli"/>
+      <label for="image">image</label>
+    </div>
+
+  </fieldset>
+
+  <fieldset id="gatekeeper">
+    <legend>You need a gatekeeper to speep up?</legend>
+  
+    <div>
+      <input type="checkbox" id="True" name="True" value="True" class="gatekeeper"/>
+      <label for="True">Yes, I do.</label>
+    </div>
+
+    <div>
+      <input type="checkbox" id="False" name="False" value="False" class="gatekeeper"/>
+      <label for="False">No.</label>
+    </div>
+
+  </fieldset> <br><br>
+
+
+  <button onclick="submitData()">Apply</button>
+  <button id="docker" onclick="submitDocker()" disabled>Build the experiment locally in docker</button>
+  <!-- <input type="reset" value="Reset"> -->
+  <p id="status"></p>
+
+
+  <script>
+    $(".group-level").hide();
+    $(".blockwise").hide();
+    $('.experiment-type').on('change', function() {
+      $('.experiment-type').not(this).prop('checked', false);
+      // console.log($('.experiment-type:checked').val());
+      if($("#MCMCP").is(":checked")) {
+        //show the subboxes checked        
+        $(".group-level").show();
+        $(".blockwise").hide();
+      }
+      else if ($("#blockwise-MCMCP").is(":checked")) {
+          // uncheck the sub boxes and hide it 
+        $(".blockwise").show();
+        $(".group-level").hide();
+      } else {
+        $(".blockwise").hide();
+        $(".group-level").hide();
+      }
+  });
+
+  $('.stimuli').on('change', function() {
+      $('.stimuli').not(this).prop('checked', false);
+      // console.log($('.stimuli:checked').val());
+  });
+  $('.gatekeeper').on('change', function() {
+      $('.gatekeeper').not(this).prop('checked', false);
+  });
+
+  function submitData() {
+    const experiment = $('.experiment-type:checked').val();
+    const group_table_name = $('#group-table').val();
+    const max_turnpoint = $('#blockwise-blocks').val();
+
+    const trial_per_participant_per_label = $('#blockwise-ntrials-label').val();
+    const trial_per_participant_per_class = $('#n_trial').val();
+
+    const gatekeeper = $('.gatekeeper:checked').val();
+    const classes = $('#categories').val();
+    const class_questions = $('#questions').val();
+    const dim = $('#dim').val();
+    const n_chain = $('#n_chain').val();
+    const mode = $('.stimuli:checked').val()
+
+    console.log(experiment, group_table_name, max_turnpoint,  
+    trial_per_participant_per_label, trial_per_participant_per_class, classes, class_questions, dim, n_chain, mode);
+    // Send data to main process
+    window.electronAPI.sendParameters({ experiment, group_table_name, max_turnpoint,  
+      trial_per_participant_per_label, trial_per_participant_per_class, classes, class_questions, dim, n_chain, mode});
+  }
+
+    // Receive success message from main process
+  window.electronAPI.onResponse((message) => {
+    $('#status').html(message);
+    $('#docker').removeAttr("disabled");
+  });
+
+  function submitDocker() {
+    window.electronAPI.sendDocker('build');
+  }
+
+  window.electronAPI.onDocker((message) => {
+    $('#status').html(message);
+  });
+
+  </script>
+</body>
+</html>
+
+<!-- # cat /etc/services | grep postgres
+group_table_name=grou_mcmcp  # only work if experiment=MCMCP (group level), for individual-level, table name is each participant id
+
+# [experiment design]
+experiment=MCMCP  # MCMCP, individual-MCMCP, blockwise-MCMCP, dMCMCP => customized at api.js
+max_turnpoint=3  # only work for block-wise MCMCP
+trial_per_participant_per_label=5
+
+trial_per_participant_per_class=5
+gatekeeper=False  # False, Custom, External, (customized at gatekeeper.js)
+
+classes=happy, sad, neutral
+class_questions=Which one looks happier?/Which one looks sadder?/Which one looks more neutral?
+
+# [stimuli design]
+dim=3  # fit line_drawing's number of parameter
+n_chain=2
+mode=test  #image, test (send coordinates to the frontend), (customized at transformer.js) -->
