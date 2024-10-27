@@ -3,11 +3,12 @@ const { app, BrowserWindow, ipcMain } = require('electron');
 const fs = require('fs');
 const path = require('path');
 const { exec } = require('child_process');
+const { spawn } = require('child_process');
 
 function createWindow() {
   const win = new BrowserWindow({
     width: 1000,
-    height: 1000,
+    height: 1200,
     webPreferences: {
       preload: path.join(__dirname, 'GUI-preload.js'),
       nodeIntegration: false,
@@ -57,17 +58,30 @@ ipcMain.on('docker', (event, data) => {
   // Update .env file code (same as before)
 
   // Example terminal command after .env update
-  // exec('docker compose up --build', (error, stdout, stderr) => {
-  //   if (error) {
-  //     event.reply('docker-success', `Failed: ${error.message}`);
-  //     return;
-  //   }
-  //   event.reply('docker-success', `Success: ${stdout}`);
-  // });
-  event.reply('docker-success', `Building is about to start...`);
-  setTimeout(() => {
+  if (data==='build') {
+    event.reply('docker-success', `Experiment is building, after seeing 'Server running on port 8080' below, you can visit http://localhost:8080`);
+    const dockerProcess = spawn('docker', ['compose', 'up', '--build']);
+    // Listen for standard output from the Docker process
+    dockerProcess.stdout.on('data', (data) => {
+      event.reply('docker-output', data.toString());
+    });
+
+    // Listen for error output from the Docker process
+    dockerProcess.stderr.on('data', (data) => {
+      event.reply('docker-output', data.toString());
+    });
+
+    // Listen for the close event when the process is finished
+    // dockerProcess.on('close', (code) => {
+    //   event.reply('docker-success', `Docker build process exited with code ${code}, now you can visit http://localhost:8080`);
+    // });
+
+  } else if (data==='finish') {
     app.quit();
-  }, 1000); 
+  }
+  // setTimeout(() => {
+  //   app.quit();
+  // }, 1000); 
 });
 
 // { experiment, group_table_name, max_turnpoint,  

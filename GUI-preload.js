@@ -6,4 +6,5 @@ contextBridge.exposeInMainWorld('electronAPI', {
   onResponse: (callback) => ipcRenderer.on('submit-success', (event, data) => callback(data)), 
   sendDocker: (command) => ipcRenderer.send('docker', command),
   onDocker: (callback) => ipcRenderer.on('docker-success', (event, data) => callback(data)), 
+  outputDocker: (callback) => ipcRenderer.on('docker-output', (event, data) => callback(data)), 
 });

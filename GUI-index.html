@@ -6,6 +6,21 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.2.4/jquery.min.js"></script>
   <title>Experiment Setup</title>
+  <style>
+    #output {
+    max-height: 150px; /* Set a max height for scrolling */
+    overflow-y: auto; /* Enable vertical scrolling */
+    white-space: pre-wrap; /* Preserve line breaks */
+    
+    /* Styling */
+    border: 2px solid #333; /* Border color and thickness */
+    border-radius: 5px; /* Rounded corners */
+    padding: 10px; /* Padding inside the box */
+    background-color: #b4de60; /* Background color */
+    color: #333; /* Text color */
+    font-family: monospace; /* Monospaced font for a console-like appearance */
+  }
+  </style>
 </head>
 <body>
   <h2>Set Environment Variables</h2>
@@ -94,8 +109,11 @@
 
   <button onclick="submitData()">Apply</button>
   <button id="docker" onclick="submitDocker()" disabled>Build the experiment locally in docker</button>
+  <button onclick="finish()">Finish</button>
   <!-- <input type="reset" value="Reset"> -->
-  <p id="status"></p>
+  <p id="status" style="color: brown;"></p><br>
+  <div id="output" style="white-space: pre-wrap;"></div>
+
 
 
   <script>
@@ -163,6 +181,15 @@
     $('#status').html(message);
   });
 
+  function finish() {
+    window.electronAPI.sendDocker('finish');
+  }
+
+  window.electronAPI.outputDocker((message) => {
+    $('#output').append(`${message}\n`);
+    const outputDiv = $('#output');
+    outputDiv.scrollTop(outputDiv.prop("scrollHeight"));
+  });
   </script>
 </body>
 </html>
