@@ -16,9 +16,9 @@ if (process.env.mode==='test') {
 /////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
-/////////////////////// proposal function: Gaussian ///////////////////////
+/////////////////////// proposal function: isotropic Gaussian ///////////////////////
 const proposal_cov = Array(Number(process.env.dim)).fill().map((_, i) => 
-  Array(Number(process.env.dim)).fill().map((_, j) => i === j ? 1 : 0)
+  Array(Number(process.env.dim)).fill().map((_, j) => i === j ? Number(process.env.proposal_cov) : 0)
 );  // align with process.env.dim 
 ////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -29,6 +29,7 @@ let gatekeeper;
 if (process.env.gatekeeper==='False') {
   gatekeeper = false;
 } else if (process.env.gatekeeper==='Custom') {
+  var gatekeepers = []
   const gatekeeper_parameters = {  // align with process.env.dim 
     // n*n covariance matrix to define the gatekeeper
     sigma : [[1, 0, 0], [0, 1, 0], [0, 0, 1]],
@@ -37,6 +38,7 @@ if (process.env.gatekeeper==='False') {
   }
   // call a gaussian gatekeeper class with customized parameters
   gatekeeper = new gk.Gaussian(gatekeeper_parameters);
+  // gatekeepers.push(new gk.Gaussian(gatekeeper_parameters));
 } else if (process.env.gatekeeper==='External') {
   gatekeeper = false;
 }
@@ -45,7 +47,7 @@ if (process.env.gatekeeper==='False') {
 
 /////////////////////// experiment settings ///////////////////////
 const n_chain = Number(process.env.n_chain);
-const classes = process.env.classes.split(", ");
+const classes = process.env.classes.split("/");
 const class_questions = process.env.class_questions.split("/");
 const n_class = classes.length;
 const max_trial = Number(process.env.trial_per_participant_per_class);

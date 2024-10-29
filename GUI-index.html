@@ -64,7 +64,7 @@
   <input id="n_trial" type="text" value="20"><br><br>
 
   <label>Enter names of the categories involved in the experiment:</label>
-  <input id="categories" type="text" value="happy, sad"><br><br>
+  <input id="categories" type="text" value="happy/sad"><br><br>
 
   <label>Specify questions for these categories when selecting stimuli:</label><br>
   <input id="questions" type="text" value="Which one looks happier?/Which one looks sadder?" size="100"><br><br>
@@ -74,7 +74,9 @@
 
   <label>Enter number of chains:</label>
   <input id="n_chain" type="text" value="2"><br><br>
-
+  
+  <label>Enter the variance of proposal function (isotropic Gaussian):</label>
+  <input id="proposal_cov" type="text" value="1"><br><br>
 
   <fieldset id="stimuli">
     <legend>Stimuli type:</legend>
@@ -95,16 +97,20 @@
     <legend>You need a gatekeeper to speep up?</legend>
   
     <div>
-      <input type="checkbox" id="True" name="True" value="True" class="gatekeeper"/>
+      <input type="checkbox" id="gkTrue" name="True" value="Custom" class="gatekeeper"/>
       <label for="True">Yes, I do.</label>
     </div>
 
     <div>
-      <input type="checkbox" id="False" name="False" value="False" class="gatekeeper"/>
+      <input type="checkbox" id="gkFalse" name="False" value="False" class="gatekeeper"/>
       <label for="False">No.</label>
     </div>
 
   </fieldset> <br><br>
+
+  <!-- define gatekeepers -->
+   <div id="gatekeepers_define">
+   </div>
 
 
   <button onclick="submitData()">Apply</button>
@@ -145,6 +151,40 @@
       $('.gatekeeper').not(this).prop('checked', false);
   });
 
+
+  $('.gatekeeper').on('change', function() {
+    $('#gatekeepers_define').html('');
+    if ($("#gkTrue").is(":checked")) {
+      for (var i = 0; i < $('#categories').val().split('/').length; i++) {
+        var category = $('#categories').val().split('/')[i];
+        var id = `gatekeepercov-${category}`;
+        const dim = Number($('#dim').val());
+        $('#gatekeepers_define').append(`
+        <label>Please define your gatekeeper's mean for ${category} here:</label>
+        <input id="gatekeepermean-${category}" type="text" value="${Array(dim).fill().map(() => 0)}"><br>
+        <label>Please define your gatekeeper's covariance for ${category} here:</label><br>
+        <div id="${id}">
+        </div>
+        <br><br>`)
+
+        for (var k = 0; k < dim; k++) {
+          $(`#${id}`).append(`
+            <div id="${category}-row${k+1}">
+            </div>
+          `)
+          for (var q = 0; q < dim; q++) {
+            $(`#${category}-row${k+1}`).append(`
+            <input type="number" class="matrix-input" value="0" style="width: 3em">
+            `)
+          }
+        }
+      }
+    } else if ($("#gkFalse").is(":checked")) {
+      $('#gatekeepers_define').html('');
+    }
+  });
+
+
   function submitData() {
     const experiment = $('.experiment-type:checked').val();
     const group_table_name = $('#group-table').val();
@@ -159,12 +199,14 @@
     const dim = $('#dim').val();
     const n_chain = $('#n_chain').val();
     const mode = $('.stimuli:checked').val()
+    const proposal_cov = $('#proposal_cov').val();
 
-    console.log(experiment, group_table_name, max_turnpoint,  
-    trial_per_participant_per_label, trial_per_participant_per_class, classes, class_questions, dim, n_chain, mode);
+    // console.log(experiment, group_table_name, max_turnpoint,  
+    // trial_per_participant_per_label, trial_per_participant_per_class, classes, class_questions, dim, n_chain, mode, proposal_cov);
     // Send data to main process
     window.electronAPI.sendParameters({ experiment, group_table_name, max_turnpoint,  
-      trial_per_participant_per_label, trial_per_participant_per_class, classes, class_questions, dim, n_chain, mode});
+      trial_per_participant_per_label, trial_per_participant_per_class, gatekeeper, classes, 
+      class_questions, dim, n_chain, mode, proposal_cov});
   }
 
     // Receive success message from main process
