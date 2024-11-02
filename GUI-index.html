@@ -116,6 +116,10 @@
   <button onclick="submitData()">Apply</button>
   <button id="docker" onclick="submitDocker()" disabled>Build the experiment locally in docker</button>
   <button onclick="finish()">Finish</button>
+  <button onclick="download()">Download data from local psql</button>
+
+  <button onclick="deploy_online()" disabled>Deploy the experiment online</button>
+  <button onclick="download_online()" disabled>Download data from online server</button>
   <!-- <input type="reset" value="Reset"> -->
   <p id="status" style="color: brown;"></p><br>
   <div id="output" style="white-space: pre-wrap;"></div>
@@ -232,6 +236,10 @@
     const outputDiv = $('#output');
     outputDiv.scrollTop(outputDiv.prop("scrollHeight"));
   });
+
+  function download() {
+    window.electronAPI.download('local');
+  }
   </script>
 </body>
 </html>

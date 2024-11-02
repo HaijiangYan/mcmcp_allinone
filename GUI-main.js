@@ -1,8 +1,11 @@
 // GUI
 const { app, BrowserWindow, ipcMain } = require('electron');
+// const { Pool } = require('pg');
 const fs = require('fs');
 const path = require('path');
 const { exec } = require('child_process');
+const util = require('util');
+const execPromise = util.promisify(exec);
 const { spawn } = require('child_process');
 
 function createWindow() {
@@ -85,6 +88,88 @@ ipcMain.on('docker', (event, data) => {
   //   app.quit();
   // }, 1000); 
 });
+
+
+ipcMain.on('download', async (event, data) => {
+  const progressUpdate = (message) => {
+    event.reply('docker-output', message);
+  };
+
+  try {
+    if (data==='local') {
+
+      const downloadDir = path.join(__dirname, 'db_export');
+      if (!fs.existsSync(downloadDir)) {
+        fs.mkdirSync(downloadDir);
+      }
+
+      progressUpdate('Starting export...');
+
+      const command = `docker exec postgres14 psql -U postgres -d mcmcp -c "COPY (SELECT table_name FROM information_schema.tables WHERE table_schema='public' AND table_type='BASE TABLE') TO STDOUT"`;
+      const { stdout, stderr } = await execPromise(command, { shell: true });
+
+      const tableArray = stdout.trim().split('\n');
+
+      for (const table of tableArray) {
+        progressUpdate(`Exporting to ${downloadDir}\\${table.trim()}.csv`);
+        await exportTableToCSV(table, downloadDir);
+      }
+      
+      progressUpdate('Export completed: .\\db_export\\');
+    }
+  } catch (error) {
+      progressUpdate('error');
+      // throw error;
+  }
+});
+
+function exportTableToCSV(table, downloadDir) {
+  return new Promise((resolve, reject) => {
+      // Create write stream for the CSV file
+      const outputFile = path.join(downloadDir, `${table.trim()}.csv`);
+      const writeStream = fs.createWriteStream(outputFile);
+
+      // Spawn the process with separate arguments
+      const child = spawn('docker', [
+          'exec',
+          'postgres14',
+          'psql',
+          '-U', 'postgres',
+          '-d', 'mcmcp',
+          '-c', `COPY ${table.trim()} TO STDOUT WITH CSV HEADER`
+      ]);
+
+      // Pipe the output directly to the file
+      child.stdout.pipe(writeStream);
+
+      // Handle potential errors
+      child.stderr.on('data', (data) => {
+          console.error(`Error for table ${table}:`, data.toString());
+      });
+
+      child.on('error', (error) => {
+          console.error(`Process error for table ${table}:`, error);
+          reject(error);
+      });
+
+      // Handle completion
+      child.on('close', (code) => {
+          writeStream.end();
+          if (code === 0) {
+              console.log(`Successfully exported ${table} to ${outputFile}`);
+              resolve(outputFile);
+          } else {
+              reject(new Error(`Process exited with code ${code} for table ${table}`));
+          }
+      });
+
+      // Handle write stream errors
+      writeStream.on('error', (error) => {
+          console.error(`Write stream error for ${table}:`, error);
+          reject(error);
+      });
+  });
+}
 
 // { experiment, group_table_name, max_turnpoint,  
 //   trial_per_participant_per_label, trial_per_participant_per_class, classes, class_questions, dim, n_chain, mode}
