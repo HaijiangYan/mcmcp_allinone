@@ -115,14 +115,15 @@
 
   <button onclick="submitData()">Apply</button>
   <button id="docker" onclick="submitDocker()" disabled>Build the experiment locally in docker</button>
-  <button onclick="finish()">Finish</button>
   <button onclick="download()">Download data from local psql</button>
-
+  <br><br>
   <button onclick="deploy_online()" disabled>Deploy the experiment online</button>
   <button onclick="download_online()" disabled>Download data from online server</button>
   <!-- <input type="reset" value="Reset"> -->
   <p id="status" style="color: brown;"></p><br>
   <div id="output" style="white-space: pre-wrap;"></div>
+  <br>
+  <button onclick="finish()">Finish</button>
 
 
 
@@ -159,8 +160,7 @@
   $('.gatekeeper').on('change', function() {
     $('#gatekeepers_define').html('');
     if ($("#gkTrue").is(":checked")) {
-      for (var i = 0; i < $('#categories').val().split('/').length; i++) {
-        var category = $('#categories').val().split('/')[i];
+      for (category of $('#categories').val().split('/')) {
         var id = `gatekeepercov-${category}`;
         const dim = Number($('#dim').val());
         $('#gatekeepers_define').append(`
@@ -183,8 +183,35 @@
           }
         }
       }
-    } else if ($("#gkFalse").is(":checked")) {
+    }
+  });
+
+  $('#dim, #categories').on('change', function() {
+    if ($("#gkTrue").is(":checked")) {
       $('#gatekeepers_define').html('');
+      for (category of $('#categories').val().split('/')) {
+        var id = `gatekeepercov-${category}`;
+        const dim = Number($('#dim').val());
+        $('#gatekeepers_define').append(`
+        <label>Please define your gatekeeper's mean for ${category} here:</label>
+        <input id="gatekeepermean-${category}" type="text" value="${Array(dim).fill().map(() => 0)}"><br>
+        <label>Please define your gatekeeper's covariance for ${category} here:</label><br>
+        <div id="${id}">
+        </div>
+        <br><br>`)
+
+        for (var k = 0; k < dim; k++) {
+          $(`#${id}`).append(`
+            <div id="${category}-row${k+1}">
+            </div>
+          `)
+          for (var q = 0; q < dim; q++) {
+            $(`#${category}-row${k+1}`).append(`
+            <input type="number" class="matrix-input" value="0" style="width: 3em">
+            `)
+          }
+        }
+      }
     }
   });
 
@@ -205,12 +232,29 @@
     const mode = $('.stimuli:checked').val()
     const proposal_cov = $('#proposal_cov').val();
 
+    const gatekeeper_means = {}
+    const gatekeeper_covs = {}
+    if (gatekeeper==='Custom') {
+      for (category of classes.split('/')) {
+        gatekeeper_means[category] = $(`#gatekeepermean-${category}`).val().split(',').map(Number);
+        gatekeeper_covs[category] = [];
+        for (var k = 0; k < dim; k++) {
+          var eachrow = [];
+          for (var q = 0; q < dim; q++) {
+            eachrow.push($(`#${category}-row${k+1} > .matrix-input`).get()[q].value);
+          }
+          gatekeeper_covs[category].push(eachrow.map(Number));
+        }
+      }
+    }
     // console.log(experiment, group_table_name, max_turnpoint,  
     // trial_per_participant_per_label, trial_per_participant_per_class, classes, class_questions, dim, n_chain, mode, proposal_cov);
     // Send data to main process
     window.electronAPI.sendParameters({ experiment, group_table_name, max_turnpoint,  
       trial_per_participant_per_label, trial_per_participant_per_class, gatekeeper, classes, 
-      class_questions, dim, n_chain, mode, proposal_cov});
+      class_questions, dim, n_chain, mode, proposal_cov, 
+      gatekeeper_means: JSON.stringify(gatekeeper_means), 
+      gatekeeper_covs: JSON.stringify(gatekeeper_covs)});
   }
 
     // Receive success message from main process

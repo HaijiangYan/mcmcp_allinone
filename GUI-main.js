@@ -37,7 +37,9 @@ dim=${data.dim}
 n_chain=${data.n_chain}
 mode=${data.mode}
 proposal_cov=${data.proposal_cov}
-gatekeeper=${data.gatekeeper}`;
+gatekeeper=${data.gatekeeper}
+gatekeeper_means=${data.gatekeeper_means}
+gatekeeper_covs=${data.gatekeeper_covs}`;
 
   // Write to the .env file
   const envPath = path.join(__dirname, '.env');
