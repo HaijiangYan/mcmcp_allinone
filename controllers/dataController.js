@@ -16,6 +16,16 @@ if (process.env.mode==='test') {
 /////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
+/////////////////////// experiment settings ///////////////////////
+const n_chain = Number(process.env.n_chain);
+const classes = process.env.classes.split("/");
+const class_questions = process.env.class_questions.split("/");
+const n_class = classes.length;
+const max_trial = Number(process.env.trial_per_participant_per_class);
+const max_trial_prior = Number(process.env.trial_per_participant_per_label);
+////////////////////////////////////////////////////////////////////////////////////////////
+
+
 /////////////////////// proposal function: isotropic Gaussian ///////////////////////
 const proposal_cov = Array(Number(process.env.dim)).fill().map((_, i) => 
   Array(Number(process.env.dim)).fill().map((_, j) => i === j ? Number(process.env.proposal_cov) : 0)
@@ -29,30 +39,23 @@ let gatekeeper;
 if (process.env.gatekeeper==='False') {
   gatekeeper = false;
 } else if (process.env.gatekeeper==='Custom') {
-  var gatekeepers = []
-  const gatekeeper_parameters = {  // align with process.env.dim 
-    // n*n covariance matrix to define the gatekeeper
-    sigma : [[1, 0, 0], [0, 1, 0], [0, 0, 1]],
-    // n-dimensional mean vector
-    mu : [0, 0, 0]
+  const gatekeeper_means = JSON.parse(process.env.gatekeeper_means);
+  const gatekeeper_covs = JSON.parse(process.env.gatekeeper_covs);
+  const gatekeeper = {}
+  for (cate of classes) {
+    var gatekeeper_parameters = {
+      // n*n covariance matrix to define the gatekeeper
+      sigma : gatekeeper_covs[cate],
+      // n-dimensional mean vector
+      mu : gatekeeper_means[cate]
+    }
+    // call a gaussian gatekeeper class with customized parameters
+    gatekeeper[cate] = new gk.Gaussian(gatekeeper_parameters);
   }
-  // call a gaussian gatekeeper class with customized parameters
-  gatekeeper = new gk.Gaussian(gatekeeper_parameters);
-  // gatekeepers.push(new gk.Gaussian(gatekeeper_parameters));
 } else if (process.env.gatekeeper==='External') {
   gatekeeper = false;
 }
 /////////////////////////////////////////////////////////////////////
-
-
-/////////////////////// experiment settings ///////////////////////
-const n_chain = Number(process.env.n_chain);
-const classes = process.env.classes.split("/");
-const class_questions = process.env.class_questions.split("/");
-const n_class = classes.length;
-const max_trial = Number(process.env.trial_per_participant_per_class);
-const max_trial_prior = Number(process.env.trial_per_participant_per_label);
-////////////////////////////////////////////////////////////////////////////////////////////
 
 
 
@@ -183,7 +186,7 @@ exports.start_choices_ind = async (req, res, next) => {
         "proposal": stimuli_processing(proposal), 
         "table_no": n_chain});
     } else {
-      proposal = await gatekeeper.processing(current_state, proposal, table_name, proposal_cov);
+      proposal = await gatekeeper[current_class].processing(current_state, proposal, table_name, proposal_cov);
       res.status(200).json({
         "current": stimuli_processing(current_state), 
         "proposal": stimuli_processing(proposal), 
@@ -217,7 +220,7 @@ exports.start_choices_blockwise = async (req, res, next) => {
           "current": stimuli_processing(current_state), 
           "proposal": stimuli_processing(proposal)});
       } else {
-        proposal = await gatekeeper.processing(current_state, proposal, table_name, proposal_cov);
+        proposal = await gatekeeper[current_class].processing(current_state, proposal, table_name, proposal_cov);
         res.status(200).json({
           "current": stimuli_processing(current_state), 
           "proposal": stimuli_processing(proposal)});
@@ -244,16 +247,19 @@ exports.start_choices_blockwise = async (req, res, next) => {
         [current_state, proposal]
       );
   
-      if (!gatekeeper) {
-        res.status(200).json({
-          "current": current_state, 
-          "proposal": proposal});
-      } else {
-        proposal = await gatekeeper.processing(current_state, proposal, table_name, proposal_cov);
-        res.status(200).json({
-          "current": stimuli_processing(current_state), 
-          "proposal": stimuli_processing(proposal)});
-      }
+      // if (!gatekeeper) {
+      //   res.status(200).json({
+      //     "current": current_state, 
+      //     "proposal": proposal});
+      // } else {
+      //   proposal = await gatekeeper.processing(current_state, proposal, table_name, proposal_cov);
+      //   res.status(200).json({
+      //     "current": stimuli_processing(current_state), 
+      //     "proposal": stimuli_processing(proposal)});
+      // }
+      res.status(200).json({
+        "current": current_state, 
+        "proposal": proposal});
       
     } catch (error) {
       next(error);
@@ -305,7 +311,7 @@ exports.get_choices_ind = async (req, res, next) => {
         "proposal": stimuli_processing(proposal), 
         "table_no": table_no});
     } else {
-      proposal = await gatekeeper.processing(current_state, proposal, table_name, proposal_cov);
+      proposal = await gatekeeper[current_class].processing(current_state, proposal, table_name, proposal_cov);
       res.status(200).json({
         "current": stimuli_processing(current_state), 
         "proposal": stimuli_processing(proposal), 
@@ -408,7 +414,7 @@ exports.get_choices_blockwise = async (req, res, next) => {
           "current": stimuli_processing(current_state), 
           "proposal": stimuli_processing(proposal)});
       } else {
-        proposal = await gatekeeper.processing(current_state, proposal, table_name, proposal_cov);
+        proposal = await gatekeeper[current_class].processing(current_state, proposal, table_name, proposal_cov);
         res.status(200).json({
           "current": stimuli_processing(current_state), 
           "proposal": stimuli_processing(proposal)});
@@ -450,16 +456,19 @@ exports.get_choices_blockwise = async (req, res, next) => {
         );
       }
 
-      if (!gatekeeper) {
-        res.status(200).json({
-          "current": current_state, 
-          "proposal": proposal});
-      } else {
-        proposal = await gatekeeper.processing(current_state, proposal, table_name, proposal_cov);
-        res.status(200).json({
-          "current": stimuli_processing(current_state), 
-          "proposal": stimuli_processing(proposal)});
-      }
+      // if (!gatekeeper) {
+      //   res.status(200).json({
+      //     "current": current_state, 
+      //     "proposal": proposal});
+      // } else {
+      //   proposal = await gatekeeper.processing(current_state, proposal, table_name, proposal_cov);
+      //   res.status(200).json({
+      //     "current": stimuli_processing(current_state), 
+      //     "proposal": stimuli_processing(proposal)});
+      // }
+      res.status(200).json({
+        "current": current_state, 
+        "proposal": proposal});
     } catch (error) {
       next(error);
     }
