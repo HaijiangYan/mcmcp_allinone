@@ -7,6 +7,10 @@ var current_on_left;
 var class_order;
 var classes;
 var class_questions;
+var n_rest;
+var mode;
+var stimuli_attr;
+var stimuli_prefix;
 var current_n_class = 0; // which class we're in by order;
 var n_trial = 1;
 
@@ -30,6 +34,8 @@ function submit_id(id) {
         Cookies.set('class_order', class_order);
         Cookies.set('classes', classes);
         Cookies.set('class_questions', class_questions);
+        Cookies.set('n_rest', response.data.n_rest);
+        Cookies.set('mode', response.data.mode);
     })
     .then(() => {window.location.href = `instruction`;})
     .catch((error) => {
@@ -50,6 +56,16 @@ function startChoice() {
     classes = JSON.parse(classes);
     class_questions = Cookies.get('class_questions');
     class_questions = JSON.parse(class_questions);
+    n_rest = Number(Cookies.get('n_rest'));
+    mode = Cookies.get('mode');
+
+    if (mode === 'test') {
+        stimuli_attr = 'alt';
+        stimuli_prefix = '';
+    } else if (mode === 'image') {
+        stimuli_attr = 'src';
+        stimuli_prefix = 'data:image/png;base64, ';
+    }
 
     axios.get(`api/start_choices`, {
         headers: {
@@ -58,14 +74,15 @@ function startChoice() {
         },
     })
     .then(response => {
+        // console.log(response.data);
         $(".question").html(class_questions[class_order[current_n_class]]);
         current_on_left = 0.5 <= Math.random();
         if (current_on_left) {
-            $("#choice_left > h2").html(response.data.current);
-            $("#choice_right > h2").html(response.data.proposal);
+            $("#choice_left > .stimuli").attr(stimuli_attr, stimuli_prefix+response.data.current);
+            $("#choice_right > .stimuli").attr(stimuli_attr, stimuli_prefix+response.data.proposal);
         } else {
-            $("#choice_right > h2").html(response.data.current);
-            $("#choice_left > h2").html(response.data.proposal);
+            $("#choice_right > .stimuli").attr(stimuli_attr, stimuli_prefix+response.data.current);
+            $("#choice_left > .stimuli").attr(stimuli_attr, stimuli_prefix+response.data.proposal);
         }
         
         local_chain = response.data.table_no;
@@ -90,11 +107,11 @@ function getChoice() {
         // console.log(response.data.proposal);
         current_on_left = 0.5 <= Math.random();
         if (current_on_left) {
-            $("#choice_left > h2").html(response.data.current);
-            $("#choice_right > h2").html(response.data.proposal);
+            $("#choice_left .stimuli").attr(stimuli_attr, stimuli_prefix+response.data.current);
+            $("#choice_right .stimuli").attr(stimuli_attr, stimuli_prefix+response.data.proposal);
         } else {
-            $("#choice_right > h2").html(response.data.current);
-            $("#choice_left > h2").html(response.data.proposal);
+            $("#choice_right .stimuli").attr(stimuli_attr, stimuli_prefix+response.data.current);
+            $("#choice_left .stimuli").attr(stimuli_attr, stimuli_prefix+response.data.proposal);
         }
 
         local_chain = response.data.table_no;
@@ -130,11 +147,20 @@ function sendChoice(selected) {
     .then(response => {
         n_trial ++;
         if (!response.data.finish) {
-            fadeaway_option(response.data.progress);
-
-            setTimeout(() => {
-                getChoice();
-            }, 500)
+            if ((n_trial-1)%n_rest===0 && n_trial != 2) {
+                time_to_rest().then(() => {
+                    // Code here will run after the user clicks "Continue"
+                    fadeaway_option(response.data.progress);
+                    setTimeout(() => {
+                        getChoice();
+                    }, 500)
+                });
+            } else {
+                fadeaway_option(response.data.progress);
+                setTimeout(() => {
+                    getChoice();
+                }, 500)
+            }
 
         } else {
             if (current_n_class < classes.length-1) {
@@ -183,7 +209,19 @@ function updateProgress(progress) {
     progressBar.style.width = `${progress*100}%`;
 }
 
+function time_to_rest() {
+    return $.Deferred(function(deferred) {
+        // Display the modal
+        $('#restContent p').html('You can have a rest now!');
+        $("#rest").css("display", "flex");
 
+        // Wait for the user to click "Continue"
+        $("#continueButton").on("click", function() {
+            $("#rest").css("display", "none"); // Hide the modal
+            deferred.resolve();    // Continue the script
+        });
+    }).promise();
+}
 
 
 /////////////////////////////////////////////&&&/////////////////////////////////////////////

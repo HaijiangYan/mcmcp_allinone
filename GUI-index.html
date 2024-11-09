@@ -6,21 +6,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.2.4/jquery.min.js"></script>
   <title>Experiment Setup</title>
-  <style>
-    #output {
-    max-height: 150px; /* Set a max height for scrolling */
-    overflow-y: auto; /* Enable vertical scrolling */
-    white-space: pre-wrap; /* Preserve line breaks */
-    
-    /* Styling */
-    border: 2px solid #333; /* Border color and thickness */
-    border-radius: 5px; /* Rounded corners */
-    padding: 10px; /* Padding inside the box */
-    background-color: #b4de60; /* Background color */
-    color: #333; /* Text color */
-    font-family: monospace; /* Monospaced font for a console-like appearance */
-  }
-  </style>
+  <link rel="stylesheet" href="./GUI-style.css">
 </head>
 <body>
   <h2>Set Environment Variables</h2>
@@ -63,6 +49,9 @@
   <label>Please set the number of trials in each block when selecting stimuli:</label>
   <input id="n_trial" type="text" value="20"><br><br>
 
+  <label>After how many trials will come to a rest:</label>
+  <input id="n_rest" type="text" value="10"><br><br>
+
   <label>Enter names of the categories involved in the experiment:</label>
   <input id="categories" type="text" value="happy/sad"><br><br>
 
@@ -89,6 +78,8 @@
     <div>
       <input type="checkbox" id="image" name="image" value="image" class="stimuli"/>
       <label for="image">image</label>
+      <label class="imageurl">URL:</label>
+      <input class="imageurl" id="imageurl_input" type="text" value="http://serverurl:3000/generate">
     </div>
 
   </fieldset>
@@ -149,10 +140,18 @@
       }
   });
 
+  $(".imageurl").hide();
   $('.stimuli').on('change', function() {
       $('.stimuli').not(this).prop('checked', false);
       // console.log($('.stimuli:checked').val());
+      if($("#image").is(":checked")) {
+        //show the subboxes checked        
+        $(".imageurl").show();
+      } else {
+        $(".imageurl").hide();
+      }
   });
+
   $('.gatekeeper').on('change', function() {
       $('.gatekeeper').not(this).prop('checked', false);
   });
@@ -224,6 +223,7 @@
 
     const trial_per_participant_per_label = $('#blockwise-ntrials-label').val();
     const trial_per_participant_per_class = $('#n_trial').val();
+    const n_rest = $('#n_rest').val();
 
     const gatekeeper = $('.gatekeeper:checked').val();
     const classes = $('#categories').val();
@@ -232,6 +232,7 @@
     const n_chain = $('#n_chain').val();
     const mode = $('.stimuli:checked').val()
     const proposal_cov = $('#proposal_cov').val();
+    const imageurl = $('#imageurl_input').val();
 
     const gatekeeper_means = {}
     const gatekeeper_covs = {}
@@ -252,8 +253,8 @@
     // trial_per_participant_per_label, trial_per_participant_per_class, classes, class_questions, dim, n_chain, mode, proposal_cov);
     // Send data to main process
     window.electronAPI.sendParameters({ experiment, group_table_name, max_turnpoint,  
-      trial_per_participant_per_label, trial_per_participant_per_class, gatekeeper, classes, 
-      class_questions, dim, n_chain, mode, proposal_cov, 
+      trial_per_participant_per_label, trial_per_participant_per_class, n_rest, gatekeeper, classes, 
+      class_questions, dim, n_chain, mode, imageurl, proposal_cov, 
       gatekeeper_means: JSON.stringify(gatekeeper_means), 
       gatekeeper_covs: JSON.stringify(gatekeeper_covs)});
   }

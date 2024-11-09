@@ -8,6 +8,11 @@ var start_classes;
 var classes;
 var class_questions;
 var max_turnpoint;
+var n_rest;
+
+var mode;
+var stimuli_attr;
+var stimuli_prefix;
 
 var current_chain;
 var current_class;
@@ -28,6 +33,7 @@ function submit_id(id) {
         },
     })
     .then(response => {
+        // console.log(response.data);
         start_classes = JSON.stringify(response.data.start_classes);
         classes = JSON.stringify(response.data.classes);
         class_questions = JSON.stringify(response.data.class_questions);
@@ -36,6 +42,8 @@ function submit_id(id) {
         Cookies.set('classes', classes);
         Cookies.set('class_questions', class_questions);
         Cookies.set('max_turnpoint', response.data.max_turnpoint);
+        Cookies.set('n_rest', response.data.n_rest);
+        Cookies.set('mode', response.data.mode);
     })
     .then(() => {window.location.href = `instruction`;})
     .catch((error) => {
@@ -62,12 +70,24 @@ function load_parameters() {
     class_questions = JSON.parse(class_questions);
 
     max_turnpoint = Number(Cookies.get('max_turnpoint'));
+
+    n_rest = Number(Cookies.get('n_rest'));
+    mode = Cookies.get('mode');
+
+    if (mode === 'test') {
+        stimuli_attr = 'alt';
+        stimuli_prefix = '';
+    } else if (mode === 'image') {
+        stimuli_attr = 'src';
+        stimuli_prefix = 'data:image/png;base64, ';
+    }
 }
 
 
 function startChoice(the_chain=1, the_class=start_classes[0]) {
     current_chain = the_chain;
     current_class = the_class;
+    $( ".stimuli" ).replaceWith('<img class="stimuli" src="" alt="" height="96" width="60">');
     // console.log(current_chain, current_class);
     axios.get(`api/start_choices`, {
         headers: {
@@ -81,11 +101,11 @@ function startChoice(the_chain=1, the_class=start_classes[0]) {
         $(".question").html(class_questions[classes.indexOf(current_class)]);  //class_questions[classes.findIndex(current_class)]
         current_on_left = 0.5 <= Math.random();
         if (current_on_left) {
-            $("#choice_left > h2").html(response.data.current);
-            $("#choice_right > h2").html(response.data.proposal);
+            $("#choice_left > .stimuli").attr(stimuli_attr, stimuli_prefix+response.data.current);
+            $("#choice_right > .stimuli").attr(stimuli_attr, stimuli_prefix+response.data.proposal);
         } else {
-            $("#choice_right > h2").html(response.data.current);
-            $("#choice_left > h2").html(response.data.proposal);
+            $("#choice_right > .stimuli").attr(stimuli_attr, stimuli_prefix+response.data.current);
+            $("#choice_left > .stimuli").attr(stimuli_attr, stimuli_prefix+response.data.proposal);
         }
         
         fadein_option();
@@ -100,7 +120,7 @@ function startChoice(the_chain=1, the_class=start_classes[0]) {
 
 
 function startChoice_prior(stimuli) {
-
+    $( ".stimuli" ).replaceWith('<h2 class="stimuli">Option</h2>');
     axios.get(`api/start_choices`, {
         headers: {
             'ID': local_pid,
@@ -112,11 +132,11 @@ function startChoice_prior(stimuli) {
         $(".question").html(`Which can best describe the face:${stimuli}`);
         current_on_left = 0.5 <= Math.random();
         if (current_on_left) {
-            $("#choice_left > h2").html(response.data.current);
-            $("#choice_right > h2").html(response.data.proposal);
+            $("#choice_left > .stimuli").html(response.data.current);
+            $("#choice_right > .stimuli").html(response.data.proposal);
         } else {
-            $("#choice_right > h2").html(response.data.current);
-            $("#choice_left > h2").html(response.data.proposal);
+            $("#choice_right > .stimuli").html(response.data.current);
+            $("#choice_left > .stimuli").html(response.data.proposal);
         }
         
         fadein_option();
@@ -143,12 +163,22 @@ function getChoice(target) {
     .then(response => {
         // console.log(response.data.proposal);
         current_on_left = 0.5 <= Math.random();
-        if (current_on_left) {
-            $("#choice_left > h2").html(response.data.current);
-            $("#choice_right > h2").html(response.data.proposal);
+        if (target==='likelihood') {
+            if (current_on_left) {
+                $("#choice_left > .stimuli").attr(stimuli_attr, stimuli_prefix+response.data.current);
+                $("#choice_right > .stimuli").attr(stimuli_attr, stimuli_prefix+response.data.proposal);
+            } else {
+                $("#choice_right > .stimuli").attr(stimuli_attr, stimuli_prefix+response.data.current);
+                $("#choice_left > .stimuli").attr(stimuli_attr, stimuli_prefix+response.data.proposal);
+            }
         } else {
-            $("#choice_right > h2").html(response.data.current);
-            $("#choice_left > h2").html(response.data.proposal);
+            if (current_on_left) {
+                $("#choice_left > .stimuli").html(response.data.current);
+                $("#choice_right > .stimuli").html(response.data.proposal);
+            } else {
+                $("#choice_right > .stimuli").html(response.data.current);
+                $("#choice_left > .stimuli").html(response.data.proposal);
+            }
         }
 
         fadein_option();
@@ -181,11 +211,20 @@ function sendChoice(selected) {
     .then(response => {
         n_trial ++;
         if (!response.data.finish) {
-            fadeaway_option(response.data.progress);
-
-            setTimeout(() => {
-                getChoice('likelihood');
-            }, 500)
+            if ((n_trial-1)%n_rest===0 && n_trial != 2) {
+                time_to_rest().then(() => {
+                    // Code here will run after the user clicks "Continue"
+                    fadeaway_option(response.data.progress);
+                    setTimeout(() => {
+                        getChoice('likelihood');
+                    }, 500)
+                });
+            } else {
+                fadeaway_option(response.data.progress);
+                setTimeout(() => {
+                    getChoice('likelihood');
+                }, 500)
+            }
 
         } else {
             // n_turnpoint ++;
@@ -232,10 +271,20 @@ function sendChoice_prior(selected) {
     .then(response => {
         n_trial ++;
         if (!response.data.finish) {
-            fadeaway_option(response.data.progress);
-            setTimeout(() => {
-                getChoice('prior');
-            }, 500)
+            if ((n_trial-1)%n_rest===0 && n_trial != 2) {
+                time_to_rest().then(() => {
+                    // Code here will run after the user clicks "Continue"
+                    fadeaway_option(response.data.progress);
+                    setTimeout(() => {
+                        getChoice('prior');
+                    }, 500)
+                });
+            } else {
+                fadeaway_option(response.data.progress);
+                setTimeout(() => {
+                    getChoice('prior');
+                }, 500)
+            }
 
         } else {
             n_turnpoint ++;
@@ -314,3 +363,17 @@ function updateProgress(progress) {
     progressBar.style.width = `${progress*100}%`;
 }
 
+
+function time_to_rest() {
+    return $.Deferred(function(deferred) {
+        // Display the modal
+        $('#restContent p').html('You can have a rest now!');
+        $("#rest").css("display", "flex");
+
+        // Wait for the user to click "Continue"
+        $("#continueButton").on("click", function() {
+            $("#rest").css("display", "none"); // Hide the modal
+            deferred.resolve();    // Continue the script
+        });
+    }).promise();
+}

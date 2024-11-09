@@ -13,7 +13,7 @@ if (process.env.experiment === "MCMCP") {
     router.get('/start_choices', dataController.start_choices_ind);
     router.get('/get_choices', dataController.get_choices_ind);
     router.post('/register_choices', dataController.register_choices_ind);
-} else if (process.env.experiment === "block-wise") {
+} else if (process.env.experiment === "blockwise-MCMCP") {
     router.post("/set_table", dataController.set_table_blockwise);
     router.get('/start_choices', dataController.start_choices_blockwise);
     router.get('/get_choices', dataController.get_choices_blockwise);

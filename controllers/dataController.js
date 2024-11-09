@@ -34,6 +34,7 @@ const proposal_cov = Array(Number(process.env.dim)).fill().map((_, i) =>
 
 
 ////////////////// gatekeeper define ///////////////////////
+// console.log(process.env.gatekeeper)
 let gatekeeper;
 
 if (process.env.gatekeeper==='False') {
@@ -41,7 +42,7 @@ if (process.env.gatekeeper==='False') {
 } else if (process.env.gatekeeper==='Custom') {
   const gatekeeper_means = JSON.parse(process.env.gatekeeper_means);
   const gatekeeper_covs = JSON.parse(process.env.gatekeeper_covs);
-  const gatekeeper = {}
+  gatekeeper = {}
   for (cate of classes) {
     var gatekeeper_parameters = {
       // n*n covariance matrix to define the gatekeeper
@@ -82,7 +83,9 @@ exports.set_table_ind = async (req, res, next) => {
     res.status(200).json({
       "class_order": class_order, 
       "classes": classes, 
-      "class_questions": class_questions
+      "class_questions": class_questions, 
+      "n_rest": Number(process.env.n_rest), 
+      "mode": process.env.mode,
     });
   } catch (error) {
     next(error);
@@ -112,7 +115,9 @@ exports.set_table_group = async (req, res, next) => {
     res.status(200).json({
       "class_order": class_order, 
       "classes": classes, 
-      "class_questions": class_questions
+      "class_questions": class_questions, 
+      "n_rest": Number(process.env.n_rest), 
+      "mode": process.env.mode,
     });
   } catch (error) {
     next(error);
@@ -152,7 +157,9 @@ exports.set_table_blockwise = async (req, res, next) => {
       "start_classes": classes.sort(() => .5 - Math.random()).slice(0, n_chain),
       "classes": classes, 
       "class_questions": class_questions, 
-      "max_turnpoint": process.env.max_turnpoint,
+      "max_turnpoint": process.env.max_turnpoint, 
+      "n_rest": Number(process.env.n_rest), 
+      "mode": process.env.mode,
     });
   } catch (error) {
     next(error);
@@ -182,14 +189,14 @@ exports.start_choices_ind = async (req, res, next) => {
     }
     if (!gatekeeper) {
       res.status(200).json({
-        "current": stimuli_processing(current_state), 
-        "proposal": stimuli_processing(proposal), 
+        "current": await stimuli_processing(current_state), 
+        "proposal": await stimuli_processing(proposal), 
         "table_no": n_chain});
     } else {
       proposal = await gatekeeper[current_class].processing(current_state, proposal, table_name, proposal_cov);
       res.status(200).json({
-        "current": stimuli_processing(current_state), 
-        "proposal": stimuli_processing(proposal), 
+        "current": await stimuli_processing(current_state), 
+        "proposal": await stimuli_processing(proposal), 
         "table_no": n_chain});
     }
     
@@ -217,13 +224,13 @@ exports.start_choices_blockwise = async (req, res, next) => {
   
       if (!gatekeeper) {
         res.status(200).json({
-          "current": stimuli_processing(current_state), 
-          "proposal": stimuli_processing(proposal)});
+          "current": await stimuli_processing(current_state), 
+          "proposal": await stimuli_processing(proposal)});
       } else {
         proposal = await gatekeeper[current_class].processing(current_state, proposal, table_name, proposal_cov);
         res.status(200).json({
-          "current": stimuli_processing(current_state), 
-          "proposal": stimuli_processing(proposal)});
+          "current": await stimuli_processing(current_state), 
+          "proposal": await stimuli_processing(proposal)});
       }
       
     } catch (error) {
@@ -307,14 +314,14 @@ exports.get_choices_ind = async (req, res, next) => {
 
     if (!gatekeeper) {
       res.status(200).json({
-        "current": stimuli_processing(current_state), 
-        "proposal": stimuli_processing(proposal), 
+        "current": await stimuli_processing(current_state), 
+        "proposal": await stimuli_processing(proposal), 
         "table_no": table_no});
     } else {
       proposal = await gatekeeper[current_class].processing(current_state, proposal, table_name, proposal_cov);
       res.status(200).json({
-        "current": stimuli_processing(current_state), 
-        "proposal": stimuli_processing(proposal), 
+        "current": await stimuli_processing(current_state), 
+        "proposal": await stimuli_processing(proposal), 
         "table_no": table_no});
     }
   } catch (error) {
@@ -360,13 +367,13 @@ exports.get_choices_group = async (req, res, next) => {
     // for group-level mcmcp, gatekeeper is not used.
     if (!gatekeeper) {
       res.status(200).json({
-        "current": stimuli_processing(current_state), 
-        "proposal": stimuli_processing(proposal), 
+        "current": await stimuli_processing(current_state), 
+        "proposal": await stimuli_processing(proposal), 
         "table_no": table_no});
     } else {
       res.status(200).json({
-        "current": stimuli_processing(current_state), 
-        "proposal": stimuli_processing(proposal), 
+        "current": await stimuli_processing(current_state), 
+        "proposal": await stimuli_processing(proposal), 
         "table_no": table_no});
     }
   } catch (error) {
@@ -411,13 +418,13 @@ exports.get_choices_blockwise = async (req, res, next) => {
 
       if (!gatekeeper) {
         res.status(200).json({
-          "current": stimuli_processing(current_state), 
-          "proposal": stimuli_processing(proposal)});
+          "current": await stimuli_processing(current_state), 
+          "proposal": await stimuli_processing(proposal)});
       } else {
         proposal = await gatekeeper[current_class].processing(current_state, proposal, table_name, proposal_cov);
         res.status(200).json({
-          "current": stimuli_processing(current_state), 
-          "proposal": stimuli_processing(proposal)});
+          "current": await stimuli_processing(current_state), 
+          "proposal": await stimuli_processing(proposal)});
       }
     } catch (error) {
       next(error);
@@ -544,7 +551,7 @@ exports.register_choices_blockwise = async (req, res, next) => {
         res.status(200).json({
           "finish": 1, 
           "progress": 0, 
-          "proto_sample": stimuli_processing(sampling.uniform_array(Number(process.env.dim))),
+          "proto_sample": await stimuli_processing(sampling.uniform_array(Number(process.env.dim))),
         });
       }
     } catch (error) {
