@@ -30,6 +30,7 @@ experiment=${data.experiment}
 group_table_name=${data.group_table_name}
 max_turnpoint=${data.max_turnpoint}
 trial_per_participant_per_label=${data.trial_per_participant_per_label}
+consensual_n=${data.consensual_n}
 trial_per_participant_per_class=${data.trial_per_participant_per_class}
 n_rest=${data.n_rest}
 class_questions=${data.class_questions}

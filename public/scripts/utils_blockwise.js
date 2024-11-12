@@ -129,7 +129,9 @@ function startChoice_prior(stimuli) {
         },
     })
     .then(response => {
-        $(".question").html(`Which can best describe the face:${stimuli}`);
+        $(".question").html('Which can best describe the face:');
+        $(".question").append('<img id="question_stimuli" src="" alt="" height="96" width="60"></img>');
+        $("#question_stimuli").attr(stimuli_attr, stimuli_prefix+stimuli);
         current_on_left = 0.5 <= Math.random();
         if (current_on_left) {
             $("#choice_left > .stimuli").html(response.data.current);

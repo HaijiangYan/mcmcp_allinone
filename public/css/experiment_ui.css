@@ -12,10 +12,14 @@ body, html {
     align-items: center;
 }
 .question {
+    display: flex;
+    flex-direction: column;
     font-size: 30px;
     font-weight: bold;
     margin-bottom: 100px;
     color: #2d3748; /* Dark gray for readability */
+    justify-content: center;
+    align-items: center;
 }
 .options-container {
     display: flex;
