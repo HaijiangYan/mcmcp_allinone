@@ -1,5 +1,6 @@
 /* Output area */
 body {
+    padding: 15px;
     font-family:'Arvo'; 
     background: #4f3b5b;
     color: #fff;
@@ -43,12 +44,19 @@ input:focus{
     border-radius: 4px;
     padding: 1rem;
     margin-top: 1rem;
-    min-height: 200px;
+    min-height: 180px;
+    color: black;
     /* font-family: 'Courier New', Courier, monospace;
     font-size: 14px; */
-    max-height: 200px; /* Set a max height for scrolling */
+    max-height: 180px; /* Set a max height for scrolling */
     overflow-y: auto; /* Enable vertical scrolling */
     white-space: pre-wrap; /* Preserve line breaks */
+    min-width: 550px;
+    max-width: 550px;
+}
+
+#status {
+    padding: 0;
 }
 
 .container {

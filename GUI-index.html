@@ -5,13 +5,13 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.2.4/jquery.min.js"></script>
-  <title>Experiment Setup</title>
+  <title>MCMCP Setup</title>
   <link rel="stylesheet" href="./GUI-style.css">
 </head>
 <body>
-  <h2>Customize your MCMCP</h2>
+  <h2>Customize your MCMCP study</h2>
 
-  <fieldset style="height:260px">
+  <fieldset style="height:200px">
     <legend>Experiment type:</legend>
   
     <div>
@@ -30,59 +30,59 @@
     </div>
 
     <div>
-      <input type="checkbox" id="consensual-MCMCP" class="experiment-type" value="consensual-MCMCP" />
-      <label for="consensual-MCMCP">consensual-MCMCP</label>
+      <input type="checkbox" id="consensus-MCMCP" class="experiment-type" value="consensus-MCMCP" />
+      <label for="consensus-MCMCP">consensus-MCMCP</label>
     </div><br><br>
 
     <div>
-    <label class="group-level">For group-level MCMCP, please name the table where choices will be saved:</label>
-    <input class="group-level" id="group-table" type="text" value="group"><br><br>
+    <span class="group-level">&#9881;</span> <label class="group-level">For group-level MCMCP, please name the table where choices will be saved:</label>
+    <input class="group-level" id="group-table" type="text" value="group" size="10">
   
-    <label class="blockwise">For blockwise MCMCP, please set the number of blocks (each block targets at a single category):</label>
-    <input class="blockwise" id="blockwise-blocks" type="text" value="3"><br><br>
+    <span class="blockwise">&#9881;</span> <label class="blockwise">For blockwise MCMCP, please set the number of blocks (each block targets at a single category):</label>
+    <input class="blockwise" id="blockwise-blocks" type="text" value="3" size="5">
   
-    <label class="blockwise">Please set the number of trials in each block when selecting labels:</label>
-    <input class="blockwise" id="blockwise-ntrials-label" type="text" value="20"><br><br>
+    <br><span class="blockwise">&#9881;</span> <label class="blockwise">Please set the number of trials in each block when selecting labels:</label>
+    <input class="blockwise" id="blockwise-ntrials-label" type="text" value="20" size="5">
 
-    <label class="consensual">Please set the number of participant you need to reach a consensus:</label>
-    <input class="consensual" id="consensual-n" type="text" value="3"><br><br>
+    <span class="consensus">&#9881;</span> <label class="consensus">Please set the number of participant you need to reach a consensus:</label>
+    <input class="consensus" id="consensus-n" type="text" value="3" size="5"><br><br>
     </div>
   </fieldset><br>
 
-  <label>Please set the number of trials in each block when selecting stimuli:</label>
-  <input id="n_trial" type="text" value="20"><br><br>
+  <span>&#9881;</span> <label>Please set the number of trials in each block when selecting stimuli:</label>
+  <input id="n_trial" type="text" value="20" size="5"><br><br>
 
-  <label>After how many trials will come to a rest:</label>
-  <input id="n_rest" type="text" value="10"><br><br>
+  <span>&#9881;</span> <label>After how many trials will come to a rest:</label>
+  <input id="n_rest" type="text" value="10" size="5"><br><br>
 
-  <label>Enter names of the categories involved in the experiment:</label>
-  <input id="categories" type="text" value="happy/sad"><br><br>
+  <span>&#9881;</span> <label>Enter names of the categories involved in the experiment:</label><br>
+  <input id="categories" type="text" value="happy/sad" size="100"><br><br>
 
-  <label>Specify questions for these categories when selecting stimuli:</label><br>
+  <span>&#9881;</span> <label>Specify questions for these categories when selecting stimuli:</label><br>
   <input id="questions" type="text" value="Which one looks happier?/Which one looks sadder?" size="100"><br><br>
 
-  <label>Enter number of dimensions of the stimuli space:</label>
-  <input id="dim" type="text" value="3"><br><br>
+  <span>&#9881;</span> <label>Enter number of dimensions of the stimuli space:</label>
+  <input id="dim" type="text" value="3" size="5"><br><br>
 
-  <label>Enter number of chains:</label>
-  <input id="n_chain" type="text" value="2"><br><br>
+  <span>&#9881;</span> <label>Enter number of chains:</label>
+  <input id="n_chain" type="text" value="2" size="5"><br><br>
   
-  <label>Enter the variance of proposal function (isotropic Gaussian):</label>
-  <input id="proposal_cov" type="text" value="1"><br><br>
+  <span>&#9881;</span> <label>Enter the variance of proposal function (isotropic Gaussian):</label>
+  <input id="proposal_cov" type="text" value="1" size="5"><br><br>
 
-  <fieldset id="stimuli">
+  <fieldset id="stimuli" style="height:60px">
     <legend>Stimuli type:</legend>
   
     <div>
       <input type="checkbox" id="test" name="test" value="test" class="stimuli"/>
-      <label for="test">test</label>
+      <label for="test">test (positions of stimuli will be presented to participants for debugging)</label>
     </div>
 
     <div>
       <input type="checkbox" id="image" name="image" value="image" class="stimuli"/>
       <label for="image">image</label>
-      <label class="imageurl">URL:</label>
-      <input class="imageurl" id="imageurl_input" type="text" value="http://serverurl:3000/generate" size="40">
+      <label class="imageurl">address:</label>
+      <input class="imageurl" id="imageurl_input" type="text" value="http://72.144.77.119:3000/generate" size="40">
     </div>
 
   </fieldset>
@@ -110,10 +110,10 @@
    <div class="container">
     <div class="button-column">
       <button onclick="submitData()">Apply</button>
-      <button id="docker" onclick="submitDocker()" disabled>Build the experiment locally in docker</button>
-      <button onclick="download()">Download data from local psql</button>
-      <button onclick="deploy_online()" disabled>Deploy the experiment online</button>
-      <button onclick="download_online()" disabled>Download data from online server</button>
+      <button id="docker" onclick="submitDocker()" disabled>Build locally</button>
+      <button onclick="download()">Local download</button>
+      <button onclick="deploy_online()" disabled>Deploy online</button>
+      <button onclick="download_online()" disabled>Online download</button>
       <button onclick="finish()" style="background-color: red;">Finish</button>
     </div>
   <!-- <input type="reset" value="Reset"> -->
@@ -128,7 +128,7 @@
   <script>
     $(".group-level").hide();
     $(".blockwise").hide();
-    $(".consensual").hide();
+    $(".consensus").hide();
     $('.experiment-type').on('change', function() {
       $('.experiment-type').not(this).prop('checked', false);
       // console.log($('.experiment-type:checked').val());
@@ -136,21 +136,21 @@
         //show the subboxes checked        
         $(".group-level").show();
         $(".blockwise").hide();
-        $(".consensual").hide();
+        $(".consensus").hide();
       }
       else if ($("#blockwise-MCMCP").is(":checked")) {
           // uncheck the sub boxes and hide it 
         $(".blockwise").show();
         $(".group-level").hide();
-        $(".consensual").hide();
-      } else if ($("#consensual-MCMCP").is(":checked")) {
-        $(".consensual").show();
+        $(".consensus").hide();
+      } else if ($("#consensus-MCMCP").is(":checked")) {
+        $(".consensus").show();
         $(".blockwise").hide();
         $(".group-level").hide();
       } else {
         $(".blockwise").hide();
         $(".group-level").hide();
-        $(".consensual").hide();
+        $(".consensus").hide();
       }
   });
 
@@ -236,7 +236,7 @@
     const max_turnpoint = $('#blockwise-blocks').val();
 
     const trial_per_participant_per_label = $('#blockwise-ntrials-label').val();
-    const consensual_n = $('#consensual-n').val();;
+    const consensus_n = $('#consensus-n').val();
     const trial_per_participant_per_class = $('#n_trial').val();
     const n_rest = $('#n_rest').val();
 
@@ -267,7 +267,7 @@
     // console.log(experiment, group_table_name, max_turnpoint,  
     // trial_per_participant_per_label, trial_per_participant_per_class, classes, class_questions, dim, n_chain, mode, proposal_cov);
     // Send data to main process
-    window.electronAPI.sendParameters({ experiment, group_table_name, max_turnpoint, consensual_n,  
+    window.electronAPI.sendParameters({ experiment, group_table_name, max_turnpoint, consensus_n,  
       trial_per_participant_per_label, trial_per_participant_per_class, n_rest, gatekeeper, classes, 
       class_questions, dim, n_chain, mode, imageurl, proposal_cov, 
       gatekeeper_means: JSON.stringify(gatekeeper_means), 
@@ -276,7 +276,10 @@
 
     // Receive success message from main process
   window.electronAPI.onResponse((message) => {
-    $('#status').html(message);
+    // $('#status').html(message);
+    $('#output').append(`<p>${message}</p>`);
+    const outputDiv = $('#output');
+    outputDiv.scrollTop(outputDiv.prop("scrollHeight"));
     $('#docker').removeAttr("disabled");
   });
 

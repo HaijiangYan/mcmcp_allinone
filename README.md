@@ -1,6 +1,6 @@
-# All-in-One MCMCP
+# All-in-One MCMCP (AIOM)
 
-AIOM is an integrated NodeJS application to customize and deploy a Markov Chain Monte Carlo with People (MCMCP).
+AIOM is an integrated NodeJS application for customizing and deploying a Markov Chain Monte Carlo with People (MCMCP).
 
 ## Description
 
@@ -11,21 +11,41 @@ Customize and deploy a MCMCP to collect data can be really annoying.
 
 ### Dependencies
 
-* Docker, Docker-compose.
-* NodeJS
+* Docker (together with Docker-compose by default). [official release](https://docs.docker.com/get-started/get-docker/)
+* Node.js >= v18.16.0 [official release](https://nodejs.org/en/download/prebuilt-installer)
 
-### Installing
+### How to use AIOM
 
-* git clone this project
+* Clone this project into a local directory
+```
+git clone https://github.com/HaijiangYan/AIOM.git
+```
 * Launch the GUI
 ```{bash}
+# in terminal
+# set as working directory
+cd AIOM
+
+# launch the GUI
 npx electron GUI-main.js
 ```
+![alt text](public/images/gui.png)
 
-### Executing program
-
-* How to run the program
-* Step-by-step bullets
+* Setting the parameters to customize your MCMCP
+    * Experiment type: 
+    * Stimuli type:
+    * Gatekeeper:
+    * ...
+* Task control
+    * <button>Apply</button>: update the environment with new parameters; <br>
+    <mark>**Local mode**</mark>
+    * <button>Build locally</button>: build the MCMCP container on your local docker for testing and debugging (turn on docker first);
+    * <button>Local download</button>: download experiment data from the local postgresql container;<br>
+    <mark>**Online mode**</mark>
+    * <button>Deploy online</button>: build the MCMCP container on your remote server;
+    * <button>Online download</button>: build the MCMCP container on your remote server; 
+    <br>
+    * <button>Finish</button>: close this control panel. 
 ```
 code blocks for commands
 ```

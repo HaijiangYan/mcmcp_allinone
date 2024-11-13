@@ -18,6 +18,11 @@ if (process.env.experiment === "MCMCP") {
     router.get('/start_choices', dataController.start_choices_blockwise);
     router.get('/get_choices', dataController.get_choices_blockwise);
     router.post('/register_choices', dataController.register_choices_blockwise);
+} else if (process.env.experiment === "consensus-MCMCP") {
+    router.post("/set_table", dataController.set_table_consensus);
+    router.get('/start_choices', dataController.start_choices_consensus);
+    router.get('/get_choices', dataController.get_choices_consensus);
+    router.post('/register_choices', dataController.register_choices_consensus);
 }
 
 
