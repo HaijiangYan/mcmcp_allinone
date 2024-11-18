@@ -52,10 +52,6 @@ function submit_id(id) {
     });
 }
 
-function beginExperiment() {
-    window.location.href = `experiment`;
-}
-
 
 function load_parameters() {
     local_pid = Cookies.get('pid');

@@ -21,10 +21,12 @@ app.get("/", (req, res) => {
 });
 // consent page route.
 app.get("/consent", (req, res) => {
-    if (process.env.experiment!='blockwise-MCMCP') {
-        res.sendFile(path.join(__dirname, 'public', 'consent.html'));
-    } else {
+    if (process.env.experiment==='blockwise-MCMCP') {
         res.sendFile(path.join(__dirname, 'public', 'consent-blockwise.html'));
+    } else if (process.env.experiment==='consensus-MCMCP') {
+        res.sendFile(path.join(__dirname, 'public', 'consent-consensus.html'));
+    } else {
+        res.sendFile(path.join(__dirname, 'public', 'consent.html'));
     }
     
 });
@@ -32,16 +34,24 @@ app.get("/consent", (req, res) => {
 app.get("/instruction", (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'instruction.html'));
 });
+
+// waiting page route.
+app.get("/waitingroom", (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'waitingroom.html'));
+});
+
 // end experiment
 app.get("/thanks", (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'thanks.html'));
 });
 // exp page route.
 app.get("/experiment", (req, res) => {
-    if (process.env.experiment!='blockwise-MCMCP') {
-        res.sendFile(path.join(__dirname, 'public', 'experiment-test.html'));
-    } else {
+    if (process.env.experiment==='blockwise-MCMCP') {
         res.sendFile(path.join(__dirname, 'public', 'experiment-blockwise.html'));
+    } else if (process.env.experiment==='consensus-MCMCP') {
+        res.sendFile(path.join(__dirname, 'public', 'experiment-consensus.html'));
+    } else {
+        res.sendFile(path.join(__dirname, 'public', 'experiment-test.html'));
     }
 });
 

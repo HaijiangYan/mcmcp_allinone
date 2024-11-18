@@ -1,58 +1,64 @@
 /* Output area */
 body {
     padding: 15px;
-    font-family:'Arvo'; 
-    background: #4f3b5b;
-    color: #fff;
+    font-family: 'Arvo';
+    background: #052451;
+    color: #ffffff;
     font-weight: 500;
     font-size: 18px;
-    background: -moz-radial-gradient(center, ellipse cover,  #4f3b5b 0%, #231733 100%);
-    background: -webkit-gradient(radial, center center, 0px, center center, 100%, color-stop(0%,#4f3b5b), color-stop(100%,#231733));
-    background: -webkit-radial-gradient(center, ellipse cover,  #4f3b5b 0%,#231733 100%);
-    background: -o-radial-gradient(center, ellipse cover,  #4f3b5b 0%,#231733 100%);
-    background: -ms-radial-gradient(center, ellipse cover,  #4f3b5b 0%,#231733 100%);
-    background: radial-gradient(ellipse at center,  #4f3b5b 0%,#231733 100%);
+    background: -moz-radial-gradient(center, ellipse cover, #2e3b4e 0%, #1c2533 100%);
+    background: -webkit-gradient(radial, center center, 0px, center center, 100%, color-stop(0%, #2e3b4e), color-stop(100%, #1c2533));
+    background: -webkit-radial-gradient(center, ellipse cover, #2e3b4e 0%, #1c2533 100%);
+    background: -o-radial-gradient(center, ellipse cover, #2e3b4e 0%, #1c2533 100%);
+    background: -ms-radial-gradient(center, ellipse cover, #2e3b4e 0%, #1c2533 100%);
+    background: radial-gradient(ellipse at center, #2e3b4e 0%, #1c2533 100%);
 }
 
-input{
+input {
     padding: 3px 0 3px 3px;
     font-family: "Arvo";
     font-weight: 400;
-    background: rgba(0,0,0,0.3);
+    background: rgba(44, 62, 80, 0.8);
     border: none;
     outline: none;
-    color: #fff;
-    text-shadow: 1px 1px 1px rgba(0,0,0,0.3);
-    border: 1px solid rgba(0,0,0,0.3);
+    color: #e0e0e0;
+    text-shadow: 1px 1px 1px rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(0, 0, 0, 0.3);
     border-radius: 4px;
-    box-shadow: inset 0 -5px 45px rgba(100,100,100,0.2), 0 1px  1px rgba(255,255,255,0.2);
-    /* text-indent: 60px; */
+    box-shadow: inset 0 -5px 45px rgba(100, 100, 100, 0.2), 0 1px 1px rgba(255, 255, 255, 0.2);
     text-align: center;
-    transition: all .3s ease-in-out;
-    /* position: relative; */
+    transition: all 0.3s ease-in-out;
     font-size: 16px;
 }
-input:focus{
-    text-align: center;
-    /* text-indent: 12px; */
-    box-shadow: inset 0 -5px 45px rgba(100,100,100,0.4), 0 1px 1px rgba(255,255,255,0.2);
+
+input:hover {
+    /* border: 2px solid rgba(0, 0, 0, 0.3); */
+    box-shadow: inset 0 -5px 45px rgba(100, 100, 100, 0.6), 0 1px 1px rgba(255, 255, 255, 0.6);
+    transition: box-shadow 0.1s ease-in-out;
 }
 
+input:focus {
+    text-align: center;
+    box-shadow: inset 0 -5px 45px rgba(100, 100, 100, 0.6), 0 1px 1px rgba(255, 255, 255, 0.6);
+}
+
+
 #output {
-    background-color: white;
+    background-color: rgb(0, 0, 0);
     border: 2px solid #e0e0e0;
     border-radius: 4px;
     padding: 1rem;
     margin-top: 1rem;
     min-height: 180px;
-    color: black;
+    color: rgb(255, 255, 255);
     /* font-family: 'Courier New', Courier, monospace;
     font-size: 14px; */
     max-height: 180px; /* Set a max height for scrolling */
     overflow-y: auto; /* Enable vertical scrolling */
     white-space: pre-wrap; /* Preserve line breaks */
-    min-width: 550px;
-    max-width: 550px;
+    min-width: 650px;
+    max-width: 650px;
+    font-size: 15px;
 }
 
 #status {
@@ -81,19 +87,16 @@ input:focus{
 button {
     color: #fff;
     padding: 10px 20px;
-    background-color: #099272;
+    background-color: #28a745;
     background-image: radial-gradient(93% 87% at 87% 89%, rgba(0, 0, 0, 0.23) 0%, transparent 86.18%), radial-gradient(66% 66% at 26% 20%, rgba(255, 255, 255, 0.55) 0%, rgba(255, 255, 255, 0) 69.79%, rgba(255, 255, 255, 0) 100%);
     box-shadow: inset -3px -3px 9px rgba(255, 255, 255, 0.25), inset 0px 3px 9px rgba(255, 255, 255, 0.3), inset 0px 1px 1px rgba(255, 255, 255, 0.6), inset 0px -8px 36px rgba(0, 0, 0, 0.3), inset 0px 1px 5px rgba(255, 255, 255, 0.6), 2px 19px 31px rgba(0, 0, 0, 0.2);
     border-radius: 14px;
     font-weight: bold;
     font-size: 14px;
-
     border: 0;
-
     user-select: none;
     -webkit-user-select: none;
     touch-action: manipulation;
-
     cursor: pointer;
 }
 
@@ -106,7 +109,21 @@ button:disabled {
     opacity: 0.8;
 }
 
-/* Optional hover effect for non-disabled buttons */
 button:not(:disabled):hover {
-    background-color: #045844;
+    background-color: #218838;
+}
+
+.experiment-types-container {
+    display: flex;
+    gap: 1rem; /* Adjust gap as needed */
+    align-items: center; /* Align items vertically centered */
+}
+
+.experiment-types-container div {
+    display: flex;
+    align-items: center;
+}
+
+.experiment-types-container label {
+    margin-left: 0.2rem; /* Space between checkbox and label */
 }

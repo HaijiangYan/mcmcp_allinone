@@ -7,16 +7,35 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/1.3.4/axios.min.js"></script>
     <link rel="icon" type="image/png" href="./images/favicon.png"/>
     <link rel="stylesheet" href="./css/style.css">
-    <script type = "text/javascript" src="./scripts/utils.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/js-cookie@3.0.5/dist/js.cookie.min.js"></script>
+    <style>
+        .container {
+            text-align: center;
+            padding: 20px;
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+    </style>
 </head>
 <body>
     <div class="container">
-        <h1>Begin!</h1>
+        <h1>Instruction</h1>
         <button onclick="beginExperiment()">Begin</button>
         <div id="response"></div>
     </div>
 
-    <script>
-    </script>
+<script>
+    function beginExperiment() {
+        if (Cookies.get('team_id')) {
+            window.location.href = 'waitingroom'; 
+        } else {
+            window.location.href = 'experiment'; 
+        }
+}
+</script>
 </body>
 </html>

@@ -35,4 +35,9 @@ function shuffle(array) {
     return array;
 }
 
-module.exports = {gaussianRandom, uniform_array, gaussian_array, shuffle};
+// Function to create array with custom start position
+function createShiftedArray(length, start) {
+    return Array.from(Array(length).keys()).map(i => (i + start) % length);
+}
+
+module.exports = {gaussianRandom, uniform_array, gaussian_array, shuffle, createShiftedArray};

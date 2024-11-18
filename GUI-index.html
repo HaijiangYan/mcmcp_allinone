@@ -9,11 +9,12 @@
   <link rel="stylesheet" href="./GUI-style.css">
 </head>
 <body>
-  <h2>Customize your MCMCP study</h2>
+  <h2 style="text-align: center;">Customize your MCMCP study</h2>
 
-  <fieldset style="height:200px">
+  <fieldset style="height:140px">
     <legend>Experiment type:</legend>
   
+    <div class="experiment-types-container">
     <div>
       <input type="checkbox" id="MCMCP" class="experiment-type" value="MCMCP" />
       <label for="MCMCP">MCMCP</label>
@@ -23,51 +24,52 @@
       <input type="checkbox" id="individual-MCMCP" class="experiment-type" value="individual-MCMCP" />
       <label for="individual-MCMCP">individual-MCMCP</label>
     </div>
+
+    <div>
+      <input type="checkbox" id="consensus-MCMCP" class="experiment-type" value="consensus-MCMCP" />
+      <label for="consensus-MCMCP">consensus-MCMCP</label>
+    </div>
   
     <div>
       <input type="checkbox" id="blockwise-MCMCP" class="experiment-type" value="blockwise-MCMCP" />
       <label for="blockwise-MCMCP">blockwise-MCMCP</label>
     </div>
-
-    <div>
-      <input type="checkbox" id="consensus-MCMCP" class="experiment-type" value="consensus-MCMCP" />
-      <label for="consensus-MCMCP">consensus-MCMCP</label>
     </div><br><br>
 
     <div>
-    <span class="group-level">&#9881;</span> <label class="group-level">For group-level MCMCP, please name the table where choices will be saved:</label>
+    <span class="group-level">&#9881;</span> <label class="group-level">Name of table: please name the table where choices will be saved.</label>
     <input class="group-level" id="group-table" type="text" value="group" size="10">
   
-    <span class="blockwise">&#9881;</span> <label class="blockwise">For blockwise MCMCP, please set the number of blocks (each block targets at a single category):</label>
+    <span class="blockwise">&#9881;</span> <label class="blockwise">Number of blocks: each block contains a set of trials for samples and categories.</label>
     <input class="blockwise" id="blockwise-blocks" type="text" value="3" size="5">
   
-    <br><span class="blockwise">&#9881;</span> <label class="blockwise">Please set the number of trials in each block when selecting labels:</label>
+    <br><span class="blockwise">&#9881;</span> <label class="blockwise">Number of trials when selecting categories in each block given a sample.</label>
     <input class="blockwise" id="blockwise-ntrials-label" type="text" value="20" size="5">
 
-    <span class="consensus">&#9881;</span> <label class="consensus">Please set the number of participant you need to reach a consensus:</label>
+    <span class="consensus">&#9881;</span> <label class="consensus">Team size: the number of participants you need to reach a consensus.</label>
     <input class="consensus" id="consensus-n" type="text" value="3" size="5"><br><br>
     </div>
   </fieldset><br>
 
-  <span>&#9881;</span> <label>Please set the number of trials in each block when selecting stimuli:</label>
+  <span>&#9881;</span> <label>Number of trials: how many trials will an individual participant go through for a single category.</label>
   <input id="n_trial" type="text" value="20" size="5"><br><br>
 
   <span>&#9881;</span> <label>After how many trials will come to a rest:</label>
   <input id="n_rest" type="text" value="10" size="5"><br><br>
 
-  <span>&#9881;</span> <label>Enter names of the categories involved in the experiment:</label><br>
+  <span>&#9881;</span> <label>Categories:</label><br>
   <input id="categories" type="text" value="happy/sad" size="100"><br><br>
 
-  <span>&#9881;</span> <label>Specify questions for these categories when selecting stimuli:</label><br>
+  <span>&#9881;</span> <label>Questions for these categories:</label><br>
   <input id="questions" type="text" value="Which one looks happier?/Which one looks sadder?" size="100"><br><br>
 
-  <span>&#9881;</span> <label>Enter number of dimensions of the stimuli space:</label>
+  <span>&#9881;</span> <label>Number of dimensionalities:</label>
   <input id="dim" type="text" value="3" size="5"><br><br>
 
-  <span>&#9881;</span> <label>Enter number of chains:</label>
+  <span>&#9881;</span> <label>Number of chains:</label>
   <input id="n_chain" type="text" value="2" size="5"><br><br>
   
-  <span>&#9881;</span> <label>Enter the variance of proposal function (isotropic Gaussian):</label>
+  <span>&#9881;</span> <label>Variance of the proposal function (isotropic Gaussian):</label>
   <input id="proposal_cov" type="text" value="1" size="5"><br><br>
 
   <fieldset id="stimuli" style="height:60px">
@@ -75,7 +77,7 @@
   
     <div>
       <input type="checkbox" id="test" name="test" value="test" class="stimuli"/>
-      <label for="test">test (positions of stimuli will be presented to participants for debugging)</label>
+      <label for="test">test (positions of stimuli will be presented to participants)</label>
     </div>
 
     <div>
@@ -92,12 +94,12 @@
   
     <div>
       <input type="checkbox" id="gkTrue" name="True" value="Custom" class="gatekeeper"/>
-      <label for="True">Yes, I do.</label>
+      <label for="True">Yes</label>
     </div>
 
     <div>
       <input type="checkbox" id="gkFalse" name="False" value="False" class="gatekeeper"/>
-      <label for="False">No.</label>
+      <label for="False">No</label>
     </div>
 
   </fieldset> <br><br>

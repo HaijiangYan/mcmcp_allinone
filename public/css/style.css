@@ -32,6 +32,10 @@ button {
     cursor: pointer;
     border-radius: 4px;
 }
+button:disabled {
+    background-color: #ccc; /* Example style for disabled button */
+    cursor: not-allowed;
+}
 button:hover {
     background-color: #0056b3;
 }

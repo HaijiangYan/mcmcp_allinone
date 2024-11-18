@@ -23,6 +23,10 @@ const class_questions = process.env.class_questions.split("/");
 const n_class = classes.length;
 const max_trial = Number(process.env.trial_per_participant_per_class);
 const max_trial_prior = Number(process.env.trial_per_participant_per_label);
+const class_orders_consensus = [];
+for (let i = 0; i < 100; i++) {
+  class_orders_consensus.push(sampling.shuffle(Array.from(Array(n_class).keys())));
+}
 ////////////////////////////////////////////////////////////////////////////////////////////
 
 
@@ -59,8 +63,76 @@ if (process.env.gatekeeper==='False') {
 /////////////////////////////////////////////////////////////////////
 
 
-
 ///////////////////////// api functions /////////////////////////
+exports.set_table_consensus = async (req, res, next) => {
+  try {
+  await pool.query(`CREATE TABLE IF NOT EXISTS participants (
+    id SERIAL PRIMARY KEY,
+    participant TEXT NOT NULL,
+    team INTEGER NOT NULL
+    );`); 
+    
+  const name = req.body.names;
+  const n_row_result = await pool.query("SELECT COUNT(*) FROM participants");
+  const n_row = parseInt(n_row_result.rows[0].count, 10);
+  const team_id = Math.floor(n_row/Number(process.env.consensus_n))+1;
+
+  await pool.query(`
+    INSERT INTO participants (participant, team) 
+    VALUES ($1, $2)`,
+    [name, team_id]
+  );
+  // console.log(classes, class_questions);
+  var table_name;
+  if ((n_row+1)%Number(process.env.consensus_n)===0) {
+    const teammates = await pool.query(`SELECT participant FROM participants WHERE team = $1`, [team_id]);
+    for (let i=1; i<=n_chain; i++) {
+      // console.log(i);
+      for (let j=0; j<n_class; j++) {
+        table_name = `consensus_${team_id}_${classes[j]}_no${i}`;
+        // console.log(table_name);
+        await pool.query(`CREATE TABLE IF NOT EXISTS ${table_name} (
+          id SERIAL PRIMARY KEY,
+          trial INTEGER NOT NULL,
+          choices JSON NOT NULL,
+          picked BOOLEAN
+          );`);  
+        var team_order = sampling.createShiftedArray(Number(process.env.consensus_n), j*n_chain+i-1);
+        for (t_idx of team_order) {
+          // await pool.query(`ALTER TABLE ${table_name} ADD ${teammates.rows[t_idx].participant+'_ready'} BOOLEAN;`); 
+          await pool.query(`ALTER TABLE ${table_name} ADD ${teammates.rows[t_idx].participant} BOOLEAN;`); 
+        }
+      }
+    }
+  }
+  res.status(200).json({
+    "class_order": class_orders_consensus[team_id-1], 
+    "classes": classes, 
+    "class_questions": class_questions, 
+    "n_rest": Number(process.env.n_rest), 
+    "mode": process.env.mode,
+    "team_id": team_id,
+    "n_teammates": Number(process.env.consensus_n),
+  });
+  } catch (error) {
+    next(error);
+  }
+};
+
+exports.check_waitingroom = async (req, res, next) => {
+  const team_id = req.header('team_id');
+  try {
+    const teammates = await pool.query(`SELECT COUNT(*) FROM participants WHERE team = $1`, [team_id]);
+    const numberOfteammates = parseInt(teammates.rows[0].count, 10);
+    res.status(200).json({
+      "count": numberOfteammates,
+    });
+  } catch (error) {
+    next(error);
+  }
+}
+
+
 exports.set_table_ind = async (req, res, next) => {
   const name = req.body.names;
   var class_order = sampling.shuffle(Array.from(Array(n_class).keys()));
@@ -168,6 +240,67 @@ exports.set_table_blockwise = async (req, res, next) => {
 
 ///////////////////////////////////////////////////////////
 /////////////////////initialize the choices
+exports.get_choices_consensus = async (req, res, next) => {
+  // console.log(req.header);
+  const name = req.header('ID');
+  const current_class = req.header('current_class');
+  const team_id = req.header('team_id');
+  const table_no = Math.floor(Math.random() * n_chain) + 1;
+  var table_name, current_state, proposal, selfReady;
+  // console.log(name);
+  try {
+    table_name = `consensus_${team_id}_${current_class}_no${table_no}`;
+
+    // Check if the table is empty
+    const table_content = await pool.query(`SELECT COUNT(*) FROM ${table_name}`);
+    const isTableEmpty = parseInt(table_content.rows[0].count, 10) === 0;
+    // console.log(isTableEmpty);
+    if (isTableEmpty) {
+      // check the order of the participants
+      const colnames = await pool.query(`
+        SELECT column_name
+        FROM information_schema.columns
+        WHERE table_name = '${table_name}';
+      `);
+      const c_order = colnames.rows.map(row => row.column_name);
+      // console.log(c_order);
+      const firstReady = c_order[4];
+      // console.log(c_order, firstReady);
+
+      current_state = sampling.uniform_array(Number(process.env.dim));
+      proposal = sampling.gaussian_array(current_state, proposal_cov);
+      // console.log(current_state, proposal);
+
+      await pool.query(
+        `INSERT INTO ${table_name} (trial, choices, ${firstReady}) 
+        VALUES (1, $1, $3), (1, $2, $3)`,
+        [JSON.stringify(current_state), JSON.stringify(proposal), true]
+      );
+
+      res.status(204).send();
+
+    } else {
+      const stimuli_in_new_table = await pool.query(`
+        SELECT choices, ${name} FROM ${table_name} ORDER BY id DESC FETCH FIRST 2 ROWS ONLY
+        `);
+      current_state = stimuli_in_new_table.rows[1].choices;
+      proposal = stimuli_in_new_table.rows[0].choices;
+      selfReady = stimuli_in_new_table.rows[0][`${name}`];
+
+      if (selfReady) {
+        res.status(200).json({
+          "current": await stimuli_processing(current_state), 
+          "proposal": await stimuli_processing(proposal), 
+          "table_no": table_no});
+      } else {
+        res.status(204).send();
+      }
+    }
+  } catch (error) {
+    next(error);
+  };
+};
+
 
 exports.start_choices_ind = async (req, res, next) => {
   // console.log(req.header);
@@ -485,6 +618,87 @@ exports.get_choices_blockwise = async (req, res, next) => {
 
 ////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////////////
+exports.register_choices_consensus = async (req, res, next) => {
+  const name = req.header('ID');
+  // const n_trial = req.header('n_trial');
+  const table_no = req.header('table');
+  const current_class = req.header('current_class');
+  const team_id = req.header('team_id');
+  const selected = req.body.choice;
+  const table_name = `consensus_${team_id}_${current_class}_no${table_no}`;
+
+  const colnames = await pool.query(`
+    SELECT column_name
+    FROM information_schema.columns
+    WHERE table_name = '${table_name}';
+  `);
+  const c_order = colnames.rows.map(row => row.column_name);
+  const firstReady = c_order[4];
+
+  const selected_row = await pool.query(
+    `UPDATE ${table_name} 
+    SET picked = true WHERE id = (
+    SELECT id FROM ${table_name} ORDER BY id DESC OFFSET ${1-selected} LIMIT 1)
+    RETURNING trial, choices;`,
+  );
+
+  try {
+    if (selected === 0) {
+      // console.log('select 0');
+
+      current_state = selected_row.rows[0].choices;
+      proposal = sampling.gaussian_array(current_state, proposal_cov);
+
+      await pool.query(
+        `INSERT INTO ${table_name} (trial, choices, ${firstReady}) 
+        VALUES ($4, $1, $3), ($4, $2, $3)`,
+        [JSON.stringify(current_state), JSON.stringify(proposal), true, selected_row.rows[0].trial+1]
+      );
+
+    } else {
+      await pool.query(
+      `UPDATE ${table_name} 
+      SET ${name} = false WHERE id IN (
+      SELECT id FROM ${table_name} ORDER BY id DESC FETCH FIRST 2 ROWS ONLY);`,
+      );
+
+      if (name===c_order[c_order.length - 1]) {
+        // console.log('select 0 and last');
+        await pool.query(
+          `UPDATE ${table_name} 
+          SET picked = true WHERE id = (
+          SELECT id FROM ${table_name} ORDER BY id DESC LIMIT 1);`,
+        );
+        current_state = selected_row.rows[0].choices;
+        proposal = sampling.gaussian_array(current_state, proposal_cov);
+
+        await pool.query(
+          `INSERT INTO ${table_name} (trial, choices, ${firstReady}) 
+          VALUES ($4, $1, $3), ($4, $2, $3)`,
+          [JSON.stringify(current_state), JSON.stringify(proposal), true, selected_row.rows[0].trial+1]
+        );
+      } else {
+        // console.log('select 0 and not last');
+        // set the next participant ready
+        const next_p_ready = c_order[c_order.indexOf(name)+1];
+        await pool.query(
+          `UPDATE ${table_name} 
+          SET ${next_p_ready} = true WHERE id IN (
+          SELECT id FROM ${table_name} ORDER BY id DESC FETCH FIRST 2 ROWS ONLY);`,
+        );
+      }
+    }
+    
+
+    if (selected_row.rows[0].trial < max_trial) {
+      res.status(200).json({"finish": 0, "progress": selected_row.rows[0].trial/max_trial});
+    } else {
+      res.status(200).json({"finish": 1, "progress": 0});
+    }
+  } catch (error) {
+    next(error);
+  }
+};
 
 
 exports.register_choices_ind = async (req, res, next) => {

@@ -3,6 +3,7 @@
 // const url = host + ':' + port;
 var local_pid;
 var local_chain;
+var local_nameIndex;
 var current_on_left;
 var class_order;
 var classes;
@@ -13,6 +14,7 @@ var stimuli_attr;
 var stimuli_prefix;
 var current_n_class = 0; // which class we're in by order;
 var n_trial = 1;
+var team_id
 
 
 function consent() {
@@ -36,6 +38,8 @@ function submit_id(id) {
         Cookies.set('class_questions', class_questions);
         Cookies.set('n_rest', response.data.n_rest);
         Cookies.set('mode', response.data.mode);
+        Cookies.set('team_id', response.data.team_id);
+        Cookies.set('n_teammates', response.data.n_teammates);
     })
     .then(() => {window.location.href = `instruction`;})
     .catch((error) => {
@@ -44,7 +48,7 @@ function submit_id(id) {
     });
 }
 
-function startChoice() {
+async function startChoice() {
     local_pid = Cookies.get('pid');
     class_order = Cookies.get('class_order');
     class_order = JSON.parse(class_order);
@@ -54,6 +58,8 @@ function startChoice() {
     class_questions = JSON.parse(class_questions);
     n_rest = Number(Cookies.get('n_rest'));
     mode = Cookies.get('mode');
+    team_id = Number(Cookies.get('team_id'));
+    n_teammates = Number(Cookies.get('n_teammates'));
 
     if (mode === 'test') {
         stimuli_attr = 'alt';
@@ -63,62 +69,93 @@ function startChoice() {
         stimuli_prefix = 'data:image/png;base64, ';
     }
 
-    axios.get(`api/start_choices`, {
-        headers: {
-            'ID': local_pid,
-            'current_class': classes[class_order[current_n_class]],
-        },
-    })
-    .then(response => {
-        // console.log(response.data);
-        $(".question").html(class_questions[class_order[current_n_class]]);
-        current_on_left = 0.5 <= Math.random();
-        if (current_on_left) {
-            $("#choice_left > .stimuli").attr(stimuli_attr, stimuli_prefix+response.data.current);
-            $("#choice_right > .stimuli").attr(stimuli_attr, stimuli_prefix+response.data.proposal);
-        } else {
-            $("#choice_right > .stimuli").attr(stimuli_attr, stimuli_prefix+response.data.current);
-            $("#choice_left > .stimuli").attr(stimuli_attr, stimuli_prefix+response.data.proposal);
+    let response;
+    while (true) {
+        try {
+            response = await axios.get(`api/start_choices`, {
+                headers: {
+                    'ID': local_pid,
+                    'team_id': team_id,
+                    'current_class': classes[class_order[current_n_class]],
+                },
+            });
+
+            // Check if the response is the desired one
+            if (response.status === 200) {
+                $("#wait").css("display", "none");
+                break; // Exit the loop if the response is valid
+            } else if (response.status === 204) {
+                $('#waitContent p').html('Please wait your teammates to finish their choices!');
+                $("#wait").css("display", "flex");
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            alert(`Error sending list ${local_pid}`);
+            endExperiment();
+            return;
         }
-        
-        local_chain = response.data.table_no;
-        fadein_option();
-        return response.data;
-    })
-    .catch((error) => {
-        console.error('Error:', error);
-        alert(`Error sending list ${local_pid}`);
-        endExperiment();
-    });
+        // Wait for a specific time before retrying
+        await delay(2000); // 2 seconds delay
+    }
+
+    // Handle the valid response
+    $(".question").html(class_questions[class_order[current_n_class]]);
+    current_on_left = 0.5 <= Math.random();
+    if (current_on_left) {
+        $("#choice_left > .stimuli").attr(stimuli_attr, stimuli_prefix + response.data.current);
+        $("#choice_right > .stimuli").attr(stimuli_attr, stimuli_prefix + response.data.proposal);
+    } else {
+        $("#choice_right > .stimuli").attr(stimuli_attr, stimuli_prefix + response.data.current);
+        $("#choice_left > .stimuli").attr(stimuli_attr, stimuli_prefix + response.data.proposal);
+    }
+
+    local_chain = response.data.table_no;
+    fadein_option();
 }
 
-function getChoice() {
-    axios.get(`api/get_choices`, {
-        headers: {
-            'ID': local_pid,
-            'current_class': classes[class_order[current_n_class]],
-        },
-    })
-    .then(response => {
-        // console.log(response.data.proposal);
-        current_on_left = 0.5 <= Math.random();
-        if (current_on_left) {
-            $("#choice_left .stimuli").attr(stimuli_attr, stimuli_prefix+response.data.current);
-            $("#choice_right .stimuli").attr(stimuli_attr, stimuli_prefix+response.data.proposal);
-        } else {
-            $("#choice_right .stimuli").attr(stimuli_attr, stimuli_prefix+response.data.current);
-            $("#choice_left .stimuli").attr(stimuli_attr, stimuli_prefix+response.data.proposal);
-        }
+async function getChoice() {
+    let response;
+    while (true) {
+        try {
+            response = await axios.get(`api/get_choices`, {
+                headers: {
+                    'ID': local_pid,
+                    'team_id': team_id,
+                    'current_class': classes[class_order[current_n_class]],
+                },
+            });
 
-        local_chain = response.data.table_no;
-        fadein_option();
-        return response.data;
-    })
-    .catch((error) => {
-        console.error('Error:', error);
-        // alert(`Error sending list ${local_pid}`);
-        endExperiment();
-    });
+            // Check if the response is the desired one
+            if (response.status === 200) {
+                $("#wait").css("display", "none");
+                break; // Exit the loop if the response is valid
+            } else {
+                $('#waitContent p').html('Please wait your teammates to finish their choices!');
+                $("#wait").css("display", "flex");
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            alert(`Error sending list ${local_pid}`);
+            endExperiment();
+            return;
+        }
+        // Wait for a specific time before retrying
+        await delay(2000); // 2 seconds delay
+    }
+
+    // Handle the valid response
+    $(".question").html(class_questions[class_order[current_n_class]]);
+    current_on_left = 0.5 <= Math.random();
+    if (current_on_left) {
+        $("#choice_left > .stimuli").attr(stimuli_attr, stimuli_prefix + response.data.current);
+        $("#choice_right > .stimuli").attr(stimuli_attr, stimuli_prefix + response.data.proposal);
+    } else {
+        $("#choice_right > .stimuli").attr(stimuli_attr, stimuli_prefix + response.data.current);
+        $("#choice_left > .stimuli").attr(stimuli_attr, stimuli_prefix + response.data.proposal);
+    }
+
+    local_chain = response.data.table_no;
+    fadein_option();
 }
 
 
@@ -128,16 +165,17 @@ function sendChoice(selected) {
     } else {
         decision = 1-selected;
     }
-    // console.log("result");
+    // console.log(local_chain);
     axios.post(`api/register_choices`, {
         choice: decision,
     }, 
         {headers: {
             'Content-Type': 'application/json',
-            'ID': local_pid + '_' + classes[class_order[current_n_class]] + `_no${local_chain}`,
+            'ID': local_pid,
+            'team_id': team_id,
             'table': local_chain, 
             'current_class': classes[class_order[current_n_class]],
-            'n_trial': n_trial, 
+            // 'n_trial': n_trial, 
         },
     })
     .then(response => {
@@ -208,7 +246,7 @@ function updateProgress(progress) {
 function time_to_rest() {
     return $.Deferred(function(deferred) {
         // Display the modal
-        $('#restContent p').html('You can have a rest now!');
+        $('#restContent p').html("You can have a short break now, but please stay with your team and don't let them wait so long!");
         $("#rest").css("display", "flex");
 
         // Wait for the user to click "Continue"
@@ -217,6 +255,10 @@ function time_to_rest() {
             deferred.resolve();    // Continue the script
         });
     }).promise();
+}
+
+function delay(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
 }
 
 
