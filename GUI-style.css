@@ -1,17 +1,17 @@
 /* Output area */
 body {
     padding: 15px;
-    font-family: 'Arvo';
-    background: #052451;
-    color: #ffffff;
+    font-family: 'Arvo', sans-serif;
+    background: #f0f4f8;
+    color: #333333;
     font-weight: 500;
     font-size: 18px;
-    background: -moz-radial-gradient(center, ellipse cover, #2e3b4e 0%, #1c2533 100%);
-    background: -webkit-gradient(radial, center center, 0px, center center, 100%, color-stop(0%, #2e3b4e), color-stop(100%, #1c2533));
-    background: -webkit-radial-gradient(center, ellipse cover, #2e3b4e 0%, #1c2533 100%);
-    background: -o-radial-gradient(center, ellipse cover, #2e3b4e 0%, #1c2533 100%);
-    background: -ms-radial-gradient(center, ellipse cover, #2e3b4e 0%, #1c2533 100%);
-    background: radial-gradient(ellipse at center, #2e3b4e 0%, #1c2533 100%);
+    background: -moz-radial-gradient(center, ellipse cover, #f0f4f8 0%, #d9e2ec 100%);
+    background: -webkit-gradient(radial, center center, 0px, center center, 100%, color-stop(0%, #f0f4f8), color-stop(100%, #d9e2ec));
+    background: -webkit-radial-gradient(center, ellipse cover, #f0f4f8 0%, #d9e2ec 100%);
+    background: -o-radial-gradient(center, ellipse cover, #f0f4f8 0%, #d9e2ec 100%);
+    background: -ms-radial-gradient(center, ellipse cover, #f0f4f8 0%, #d9e2ec 100%);
+    background: radial-gradient(ellipse at center, #f0f4f8 0%, #d9e2ec 100%);
 }
 
 input {
@@ -33,13 +33,13 @@ input {
 
 input:hover {
     /* border: 2px solid rgba(0, 0, 0, 0.3); */
-    box-shadow: inset 0 -5px 45px rgba(100, 100, 100, 0.6), 0 1px 1px rgba(255, 255, 255, 0.6);
+    box-shadow: inset 0 -5px 45px rgba(15, 15, 15, 0.6), 0 1px 1px rgba(255, 255, 255, 0.6);
     transition: box-shadow 0.1s ease-in-out;
 }
 
 input:focus {
     text-align: center;
-    box-shadow: inset 0 -5px 45px rgba(100, 100, 100, 0.6), 0 1px 1px rgba(255, 255, 255, 0.6);
+    box-shadow: inset 0 -5px 45px rgba(15, 15, 15, 0.6), 0 1px 1px rgba(255, 255, 255, 0.6);
 }
 
 

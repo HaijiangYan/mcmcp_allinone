@@ -34,6 +34,7 @@ function submit_id(id) {
     })
     .then(response => {
         // console.log(response.data);
+        Cookies.remove('team_id');
         start_classes = JSON.stringify(response.data.start_classes);
         classes = JSON.stringify(response.data.classes);
         class_questions = JSON.stringify(response.data.class_questions);

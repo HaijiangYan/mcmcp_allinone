@@ -69,7 +69,7 @@ ipcMain.on('docker', (event, data) => {
 
   // Example terminal command after .env update
   if (data==='build') {
-    event.reply('docker-success', `Experiment is building, after seeing 'Server running on port 8080' below, you can visit http://localhost:8080 in your browser to test the experiment`);
+    event.reply('docker-success', `Experiment is building, after seeing 'Server running on port 8080' below, you can visit "http://localhost:8080" in your local browser to test the experiment`);
     const dockerProcess = spawn('docker', ['compose', 'up', '--build']);
     // Listen for standard output from the Docker process
     dockerProcess.stdout.on('data', (data) => {

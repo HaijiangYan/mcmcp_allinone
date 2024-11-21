@@ -40,4 +40,22 @@ function createShiftedArray(length, start) {
     return Array.from(Array(length).keys()).map(i => (i + start) % length);
 }
 
-module.exports = {gaussianRandom, uniform_array, gaussian_array, shuffle, createShiftedArray};
+function calculateMean(arrays) {
+  const length = arrays.length;
+  const sum = arrays.reduce((acc, array) => {
+    return acc.map((val, idx) => val + array[idx]);
+  }, new Array(arrays[0].length).fill(0));
+
+  return sum.map(val => val / length);
+}
+
+function calculateMode(arrays) {
+  const frequencyMap = arrays.flat().reduce((acc, val) => {
+    acc[val] = (acc[val] || 0) + 1;
+    return acc;
+  }, {});
+  const mode = Object.keys(frequencyMap).reduce((a, b) => frequencyMap[a] > frequencyMap[b] ? a : b);
+  return mode;
+}
+
+module.exports = {gaussianRandom, uniform_array, gaussian_array, shuffle, createShiftedArray, calculateMean, calculateMode};

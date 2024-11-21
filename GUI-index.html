@@ -120,7 +120,7 @@
     </div>
   <!-- <input type="reset" value="Reset"> -->
     <div class="content-column">
-      <p id="status" style="color: rgb(255, 255, 255);"></p>
+      <p id="status" style="color: rgb(0, 0, 0);"></p>
       <div id="output" style="white-space: pre-wrap;"></div>
     </div>
   </div>
@@ -133,26 +133,32 @@
     $(".consensus").hide();
     $('.experiment-type').on('change', function() {
       $('.experiment-type').not(this).prop('checked', false);
+      $(".gatekeeper").prop('checked', false);
+      $('#gatekeepers_define').html('');
       // console.log($('.experiment-type:checked').val());
       if($("#MCMCP").is(":checked")) {
         //show the subboxes checked        
         $(".group-level").show();
         $(".blockwise").hide();
         $(".consensus").hide();
+        $(".gatekeeper").prop('disabled', true);
       }
       else if ($("#blockwise-MCMCP").is(":checked")) {
           // uncheck the sub boxes and hide it 
         $(".blockwise").show();
         $(".group-level").hide();
         $(".consensus").hide();
+        $(".gatekeeper").prop('disabled', false);
       } else if ($("#consensus-MCMCP").is(":checked")) {
         $(".consensus").show();
         $(".blockwise").hide();
         $(".group-level").hide();
+        $(".gatekeeper").prop('disabled', true);
       } else {
         $(".blockwise").hide();
         $(".group-level").hide();
         $(".consensus").hide();
+        $(".gatekeeper").prop('disabled', false);
       }
   });
 

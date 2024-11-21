@@ -28,6 +28,7 @@ function submit_id(id) {
         },
     })
     .then(response => {
+        Cookies.remove('team_id');
         class_order = JSON.stringify(response.data.class_order);
         classes = JSON.stringify(response.data.classes);
         class_questions = JSON.stringify(response.data.class_questions);

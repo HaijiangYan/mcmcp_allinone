@@ -52,7 +52,7 @@ npx electron GUI-main.js
     * **consensus-MCMCP**: each sample in a chain is accepted by a team, aiming to recovering joint mental representations of multi-individual.
     ![alt text](public/images/conMCMCP.png)
     * **blockwise-MCMCP**: applying a Gibbs-sampling framework out of individual-MCMCP to recover both category representations and priors over the involved categories.
-    ![alt text](public/images/bwMCMCP.png){ width=80% }
+    ![alt text](public/images/bwMCMCP.png){width=80%}
 
 * General settings:
     * **Number of trials**: how many trials will an individual participant go through for a single category. 

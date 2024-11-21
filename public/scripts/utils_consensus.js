@@ -30,6 +30,7 @@ function submit_id(id) {
         },
     })
     .then(response => {
+        Cookies.remove('team_id');
         class_order = JSON.stringify(response.data.class_order);
         classes = JSON.stringify(response.data.classes);
         class_questions = JSON.stringify(response.data.class_questions);
@@ -129,7 +130,7 @@ async function getChoice() {
             if (response.status === 200) {
                 $("#wait").css("display", "none");
                 break; // Exit the loop if the response is valid
-            } else {
+            } else if (response.status === 204) {
                 $('#waitContent p').html('Please wait your teammates to finish their choices!');
                 $("#wait").css("display", "flex");
             }
