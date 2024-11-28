@@ -14,7 +14,8 @@ var stimuli_attr;
 var stimuli_prefix;
 var current_n_class = 0; // which class we're in by order;
 var n_trial = 1;
-var team_id
+var team_id;
+var n_chain;
 
 
 function consent() {
@@ -41,6 +42,7 @@ function submit_id(id) {
         Cookies.set('mode', response.data.mode);
         Cookies.set('team_id', response.data.team_id);
         Cookies.set('n_teammates', response.data.n_teammates);
+        Cookies.set('n_chain', response.data.n_chain);
     })
     .then(() => {window.location.href = `instruction`;})
     .catch((error) => {
@@ -49,7 +51,7 @@ function submit_id(id) {
     });
 }
 
-async function startChoice() {
+function load_parameters() {
     local_pid = Cookies.get('pid');
     class_order = Cookies.get('class_order');
     class_order = JSON.parse(class_order);
@@ -61,6 +63,9 @@ async function startChoice() {
     mode = Cookies.get('mode');
     team_id = Number(Cookies.get('team_id'));
     n_teammates = Number(Cookies.get('n_teammates'));
+    n_chain = Number(Cookies.get('n_chain'));
+
+    local_chain = 1;
 
     if (mode === 'test') {
         stimuli_attr = 'alt';
@@ -69,50 +74,52 @@ async function startChoice() {
         stimuli_attr = 'src';
         stimuli_prefix = 'data:image/png;base64, ';
     }
-
-    let response;
-    while (true) {
-        try {
-            response = await axios.get(`api/start_choices`, {
-                headers: {
-                    'ID': local_pid,
-                    'team_id': team_id,
-                    'current_class': classes[class_order[current_n_class]],
-                },
-            });
-
-            // Check if the response is the desired one
-            if (response.status === 200) {
-                $("#wait").css("display", "none");
-                break; // Exit the loop if the response is valid
-            } else if (response.status === 204) {
-                $('#waitContent p').html('Please wait your teammates to finish their choices!');
-                $("#wait").css("display", "flex");
-            }
-        } catch (error) {
-            console.error('Error:', error);
-            alert(`Error sending list ${local_pid}`);
-            endExperiment();
-            return;
-        }
-        // Wait for a specific time before retrying
-        await delay(2000); // 2 seconds delay
-    }
-
-    // Handle the valid response
-    $(".question").html(class_questions[class_order[current_n_class]]);
-    current_on_left = 0.5 <= Math.random();
-    if (current_on_left) {
-        $("#choice_left > .stimuli").attr(stimuli_attr, stimuli_prefix + response.data.current);
-        $("#choice_right > .stimuli").attr(stimuli_attr, stimuli_prefix + response.data.proposal);
-    } else {
-        $("#choice_right > .stimuli").attr(stimuli_attr, stimuli_prefix + response.data.current);
-        $("#choice_left > .stimuli").attr(stimuli_attr, stimuli_prefix + response.data.proposal);
-    }
-
-    local_chain = response.data.table_no;
-    fadein_option();
 }
+
+// async function startChoice() {
+//     let response;
+//     while (true) {
+//         try {
+//             response = await axios.get(`api/start_choices`, {
+//                 headers: {
+//                     'ID': local_pid,
+//                     'team_id': team_id,
+//                     'current_class': classes[class_order[current_n_class]],
+//                     'current_chain': local_chain,
+//                 },
+//             });
+
+//             // Check if the response is the desired one
+//             if (response.status === 200) {
+//                 $("#wait").css("display", "none");
+//                 break; // Exit the loop if the response is valid
+//             } else if (response.status === 204) {
+//                 $('#waitContent p').html('Please wait your teammates to finish their choices!');
+//                 $("#wait").css("display", "flex");
+//             }
+//         } catch (error) {
+//             console.error('Error:', error);
+//             alert(`Error sending list ${local_pid}`);
+//             endExperiment();
+//             return;
+//         }
+//         // Wait for a specific time before retrying
+//         await delay(2000); // 2 seconds delay
+//     }
+
+//     // Handle the valid response
+//     $(".question").html(class_questions[class_order[current_n_class]]);
+//     current_on_left = 0.5 <= Math.random();
+//     if (current_on_left) {
+//         $("#choice_left > .stimuli").attr(stimuli_attr, stimuli_prefix + response.data.current);
+//         $("#choice_right > .stimuli").attr(stimuli_attr, stimuli_prefix + response.data.proposal);
+//     } else {
+//         $("#choice_right > .stimuli").attr(stimuli_attr, stimuli_prefix + response.data.current);
+//         $("#choice_left > .stimuli").attr(stimuli_attr, stimuli_prefix + response.data.proposal);
+//     }
+
+//     fadein_option();
+// }
 
 async function getChoice() {
     let response;
@@ -123,16 +130,35 @@ async function getChoice() {
                     'ID': local_pid,
                     'team_id': team_id,
                     'current_class': classes[class_order[current_n_class]],
+                    'current_chain': local_chain,
                 },
             });
 
             // Check if the response is the desired one
-            if (response.status === 200) {
+            if (response.status === 200) {  // ready
+                updateProgress(response.data.progress);
                 $("#wait").css("display", "none");
                 break; // Exit the loop if the response is valid
-            } else if (response.status === 204) {
+            } else if (response.status === 204) {  //not ready
                 $('#waitContent p').html('Please wait your teammates to finish their choices!');
                 $("#wait").css("display", "flex");
+            } else if (response.status === 201) {
+                // the current chain is finished
+                updateProgress(0);
+
+                if (local_chain < n_chain) {
+                    local_chain ++;
+                    n_trial = 1;
+                } else {
+                    if (current_n_class < classes.length-1) {
+                        current_n_class ++;
+                        local_chain = 1;
+                        n_trial = 1;
+                    } else {
+                        endExperiment(); 
+                        break;
+                    }
+                }
             }
         } catch (error) {
             console.error('Error:', error);
@@ -155,7 +181,6 @@ async function getChoice() {
         $("#choice_left > .stimuli").attr(stimuli_attr, stimuli_prefix + response.data.proposal);
     }
 
-    local_chain = response.data.table_no;
     fadein_option();
 }
 
@@ -181,36 +206,22 @@ function sendChoice(selected) {
     })
     .then(response => {
         n_trial ++;
-        if (!response.data.finish) {
-            if ((n_trial-1)%n_rest===0 && n_trial != 2) {
-                time_to_rest().then(() => {
-                    // Code here will run after the user clicks "Continue"
-                    fadeaway_option(response.data.progress);
-                    setTimeout(() => {
-                        getChoice();
-                    }, 500)
-                });
-            } else {
-                fadeaway_option(response.data.progress);
+        // console.log('get response from the reigister_choices');
+        // if (!response.data.finish) {
+        if ((n_trial-1)%n_rest===0 && n_trial != 2) {
+            time_to_rest().then(() => {
+                // Code here will run after the user clicks "Continue"
+                fadeaway_option();
                 setTimeout(() => {
                     getChoice();
                 }, 500)
-            }
-
+            });
         } else {
-            if (current_n_class < classes.length-1) {
-                fadeaway_option(response.data.progress);
-                current_n_class ++;
-                n_trial = 1;
-                setTimeout(() => {
-                    startChoice();
-                }, 500)
-            } else {
-                endExperiment(); 
-            }
+            fadeaway_option();
+            setTimeout(() => {
+                getChoice();
+            }, 500)
         }
-        // setTimeout(() => getChoice(), 500)
-        // startChoice()
     })
     .catch((error) => {
         console.error('Error:', error);
@@ -226,12 +237,12 @@ function endExperiment() {
 
 
 // UI animation
-function fadeaway_option(progress) {
+function fadeaway_option() {
     $('#choice_left').removeClass('fade-in').addClass('fade-out');
     $('#choice_right').removeClass('fade-in').addClass('fade-out');
-    setTimeout(() => {
-        updateProgress(progress);
-    }, 100);
+    // setTimeout(() => {
+    //     updateProgress(progress);
+    // }, 100);
 }
 
 function fadein_option() {

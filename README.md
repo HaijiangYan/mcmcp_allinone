@@ -60,7 +60,7 @@ npx electron GUI-main.js
     * **Categories**: enter the categories seperated by slash (no space).
     * **Questions**: specify the questions for each category above, seperated by slash (no space).
     * **Dimensionality**: number of dimensionalities of your parameterized stimuli space.
-    * **Number of chains**: how many chains you wish to run in parallel.
+    * **Number of chains**: how many chains you wish to run in parallel. (In consensus-MCMCP, the **Number of trials** should be integer mutiple of the **Number of chains**)
     * **Proposal function**: as we set the proposal function of Markov Chains as isotropic Gaussian, here you just need to input a single value to indicate the extent of the proposal.
     * **Stimuli type**: test (debug mode) or image (you need to deploy an image generation model on an endpoint in advance).
     * **Gatekeeper**: Yes or No, means whether you need a Gatekeeper to speed up the sampling. Only work for the experiment type *individual-MCMCP* and *blockwise-MCMCP*. If yes, you will need to specify the distributions of Gatekeepers used for each category.

@@ -28,6 +28,7 @@ for (let i = 0; i < 100; i++) {
   class_orders_consensus.push(sampling.shuffle(Array.from(Array(n_class).keys())));
 }
 let consensus_table_participants = {};
+let consensus_table_finished = {};
 ////////////////////////////////////////////////////////////////////////////////////////////
 
 
@@ -107,6 +108,7 @@ exports.set_table_consensus = async (req, res, next) => {
           tempo_order.push(teammates.rows[t_idx].participant);
         }
         consensus_table_participants[table_name] = tempo_order;
+        consensus_table_finished[table_name] = 0;
       }
     }
   }
@@ -118,6 +120,7 @@ exports.set_table_consensus = async (req, res, next) => {
     "mode": process.env.mode,
     "team_id": team_id,
     "n_teammates": Number(process.env.consensus_n),
+    "n_chain": n_chain,
   });
   } catch (error) {
     next(error);
@@ -250,7 +253,7 @@ exports.get_choices_consensus = async (req, res, next) => {
   const name = req.header('ID');
   const current_class = req.header('current_class');
   const team_id = req.header('team_id');
-  const table_no = Math.floor(Math.random() * n_chain) + 1;
+  const table_no = req.header('current_chain');
   const table_name = `consensus_${team_id}_${current_class}_no${table_no}`;
   var current_state, proposal, selfReady;
   // console.log(name);
@@ -277,22 +280,27 @@ exports.get_choices_consensus = async (req, res, next) => {
       res.status(204).send();
 
     } else {
-      const stimuli_in_new_table = await pool.query(`
-        SELECT choices, ${name} FROM ${table_name} ORDER BY id DESC FETCH FIRST 2 ROWS ONLY
-        `);
-      current_state = stimuli_in_new_table.rows[1].choices;
-      proposal = stimuli_in_new_table.rows[0].choices;
-      selfReady = stimuli_in_new_table.rows[0][`${name}`];
-
-      if (selfReady) {
-        res.status(200).json({
-          "current": await stimuli_processing(current_state), 
-          "proposal": await stimuli_processing(proposal), 
-          "table_no": table_no});
+      if (consensus_table_finished[table_name] === 1) {
+        res.status(201).send();
       } else {
-        res.status(204).send();
+        const stimuli_in_new_table = await pool.query(`
+          SELECT trial, choices, ${name} FROM ${table_name} ORDER BY id DESC FETCH FIRST 2 ROWS ONLY
+          `);
+        current_state = stimuli_in_new_table.rows[1].choices;
+        proposal = stimuli_in_new_table.rows[0].choices;
+        selfReady = stimuli_in_new_table.rows[0][`${name}`];
+
+        if (selfReady) {
+          res.status(200).json({
+            "progress": stimuli_in_new_table.rows[0].trial/(max_trial/n_chain),  // should be interger multiple of n_chain
+            "current": await stimuli_processing(current_state), 
+            "proposal": await stimuli_processing(proposal)});
+        } else {
+          res.status(204).send();
+        }
       }
     }
+
   } catch (error) {
     next(error);
   };
@@ -632,42 +640,52 @@ exports.register_choices_consensus = async (req, res, next) => {
   const c_order = consensus_table_participants[table_name];
 
   try {
-    if (selected === 0) {
+    if (selected === 0) {  // select the current state
       // console.log('select 0');
       const selected_row = await pool.query(
         `UPDATE ${table_name} 
-        SET picked = true, ${name} = false WHERE id = (
+        SET picked = true WHERE id = (
         SELECT id FROM ${table_name} ORDER BY id DESC OFFSET 1 LIMIT 1)
         RETURNING trial, choices;`,
       );
 
-      current_state = selected_row.rows[0].choices;
-      proposal = sampling.gaussian_array(current_state, proposal_cov);
+      if (selected_row.rows[0].trial < max_trial/n_chain) {
 
-      await pool.query(
-        `INSERT INTO ${table_name} (trial, choices, ${c_order[0]}) 
-        VALUES ($4, $1, $3), ($4, $2, $3)`,
-        [JSON.stringify(current_state), JSON.stringify(proposal), true, selected_row.rows[0].trial+1]
-      );
-
-    } else {
-
-      if (name===c_order[process.env.consensus_n - 1]) {
-        // console.log('select 0 and last');
-        const selected_row = await pool.query(
-          `UPDATE ${table_name} 
-          SET picked = true, ${name} = false WHERE id = (
-          SELECT id FROM ${table_name} ORDER BY id DESC LIMIT 1)
-          RETURNING trial, choices;`,
-        );
         current_state = selected_row.rows[0].choices;
         proposal = sampling.gaussian_array(current_state, proposal_cov);
 
         await pool.query(
           `INSERT INTO ${table_name} (trial, choices, ${c_order[0]}) 
-          VALUES ($4, $1, $3), ($4, $2, $3)`,
+          VALUES ($4, $1, null), ($4, $2, $3)`,
           [JSON.stringify(current_state), JSON.stringify(proposal), true, selected_row.rows[0].trial+1]
         );
+      } else {
+        consensus_table_finished[table_name] = 1;
+      }
+
+    } else {  // select the proposal
+
+      if (name===c_order[process.env.consensus_n - 1]) {  // you are the last participant
+        // console.log('select 0 and last');
+        const selected_row = await pool.query(
+          `UPDATE ${table_name} 
+          SET picked = true WHERE id = (
+          SELECT id FROM ${table_name} ORDER BY id DESC LIMIT 1)
+          RETURNING trial, choices;`,
+        );
+
+        if (selected_row.rows[0].trial < max_trial/n_chain) {
+          current_state = selected_row.rows[0].choices;
+          proposal = sampling.gaussian_array(current_state, proposal_cov);
+
+          await pool.query(
+            `INSERT INTO ${table_name} (trial, choices, ${c_order[0]}) 
+            VALUES ($4, $1, null), ($4, $2, $3)`,
+            [JSON.stringify(current_state), JSON.stringify(proposal), true, selected_row.rows[0].trial+1]
+          );
+        } else {
+          consensus_table_finished[table_name] = 1;
+        }
       } else {
         // console.log('select 0 and not last');
         // set the next participant ready
@@ -679,13 +697,8 @@ exports.register_choices_consensus = async (req, res, next) => {
         );
       }
     }
-    
-
-    if (selected_row.rows[0].trial < max_trial) {
-      res.status(200).json({"finish": 0, "progress": selected_row.rows[0].trial/max_trial});
-    } else {
-      res.status(200).json({"finish": 1, "progress": 0});
-    }
+    // console.log(consensus_table_finished[table_name]);
+    res.status(200).send();
   } catch (error) {
     next(error);
   }
